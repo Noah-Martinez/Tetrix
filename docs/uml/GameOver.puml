@@ -1,0 +1,14 @@
+@startuml
+title Aktivitätsdiagramm: Game Over Check
+
+start
+repeat :GameLoop tick();
+if (GameState.isGameOver()?) then (true)
+  :ScoringService.getHighscores();
+  :Persistence.saveFinalScore();
+  stop
+else (false)
+  :PhysicsEngine.update();
+  :MainWindow.render();
+endif
+@enduml

@@ -1,0 +1,198 @@
+= Tetrix Architektur-Dokumentation
+:toc:
+:toclevels: 2
+:icons: font
+
+== 1. Analyse der Entwickler-Aufgabenstellung
+
+* **Technologie-Stack**
+** Kotlin-Desktop-Applikation auf der JVM
+** GUI-Framework nach Absprache mit SWE-Dozent
+* **Benutzeroberfläche**
+** Vollbildmodus, angepasst an Beamer/Laptop
+** Corporate Design der ABB-Technikerschule
+* **Spielmechanik**
+** Steuerung eines drehbaren Würfels („Rotor“), auf den fallende Spielsteine andocken
+** Punkte- und Level-Mechanik, Spielende bei Maximaldurchmesser
+* **Datenpersistenz**
+** Spieldaten (Name, Punkte, Dauer, Datum)
+** Speicherung wahlweise in lokaler Datei (Default) und in relationaler Datenbank via JDBC
+** Anzeige einer Bestenliste (Top 10)
+* **Versionierung & Lieferung**
+** Git als VCS
+** Auslieferung: IntelliJ-Projekt, ausführbare JAR und vollständige Dokumentation über MS Teams
+* **Zeitplan**
+** Prototyp & Requirements → Freigabe bis 22.05.2025
+** Architektur-Beschreibung → Freigabe bis 26.06.2025
+** Finaler Abgabe (inkl. Spiel & Doku) → 21.08.2025
+
+== 2. Kontextsicht
+
+[plantuml]
+----
+include::uml/Kontextsicht.plantuml[]
+----
+
+[cols="2,5",options="header"]
+|===
+| Externer Akteur / System      | Beschreibung
+| Spieler                       | Bedient das Spiel über Tastatur/Maus (Drehung, Verschieben, Menü)
+| Dateisystem (Flat-File)       | Standard-Speicherort für Spieldaten (CSV)
+| Datenbank (via JDBC)          | Relationale Persistenz (SQLite) für Spieldaten
+|===
+
+== 3. Bausteinsicht
+
+[plantuml]
+----
+include::uml/Bausteinsicht.puml[]
+----
+
+[cols="3,6,4",options="header"]
+|===
+| Komponente                       | Verantwortlichkeiten                                                                | Schnittstellen / Muster
+| MainWindow                       | Startet App, hält Lebenszyklus orchestriert UI-Komponenten                   | • `init()`, `setRenderer(IUIRenderer)`
+| GameCanvas                       | Rendert Spielzustand (GameState) empfängt Render-Calls                       | • `render(GameState)`
+| HighscoreView                    | Zeigt Bestenliste an                                                              | • `render(List<ScoreEntry>)`
+| InputHandler                     | Sammelt Tastatur/Maus-Ereignisse• validiert und mapped sie auf Commands       | • `handle(InputEvent)`
+| CommandFactory (Factory)         | Übersetzt InputEvent → Command-Objekte (Rotate, Move, MenuSelect)                 | • `createCommand(InputEvent)`
+| EventBus (Observer)              | Verteilt Commands und Events an abonnierte Komponenten                            | • `subscribe()/publish()`
+| GameLoop (Singleton)             | Hauptschleife: verarbeitet Commands, aktualisiert GameState, feuert Render-Events | • `tick()`
+| PhysicsEngine                    | Berechnet Positionen, Geschwindigkeiten der Spielsteine und erkennt Kollisionen Stein ↔ Rotor                         | • `updatePhysics(GameState)`, `detectCollisions(GameState)`
+| GameState                        | In-Memory-Modell: Level, Positionen, Spiellogik                                   | • Datenobjekt
+| ScoringService                   | Verarbeitet Score-Events• hält Top-10-Liste                                   | • `notify(ScoreEvent)`• `getHighscores()`
+| PersistenceFactory (Factory)     | Liefert konkrete Persistence-Instanzen basierend auf Konfiguration                | • `createPersistence(type)`
+| FilePersistence                  | Speichert/liest GameData als CSV-Datei                                       | • `save(Data)`• `load()`
+| JdbcPersistence                  | Speichert/liest GameData via JDBC (SQLite)                             | • `save(Data)`• `load()`
+| SQLiteConnection                 | Konkrete JDBC-Connection zu SQLite                                                | • `connect()`• `disconnect()`
+|===
+
+== 4. Laufzeitsicht
+
+=== 4.1 Sequenzdiagramm: Spielstart & Initialisierung
+
+[plantuml]
+----
+include::uml/Sequenzdiagramm.puml[]
+----
+
+=== 4.3 Aktivitätsdiagramm: Spielende-Entscheidung
+
+[plantuml]
+----
+include::uml/GameOver.puml[]
+----
+
+//
+// == 5. Architecture Decision Records
+//
+// === ADR 1: Plattformwahl – Kotlin Desktop auf der JVM
+// [cols="1,1"]
+// |===
+// | Status        | Accepted
+// | Datum         | 2025-06-19
+// |===
+//
+// ==== Kontext
+// Die Aufgabenstellung verlangt die Entwicklung eines funktionsfähigen Desktop-Games in Kotlin und gibt vor:
+// „Entwicklung als Kotlin Desktop-App auf der JVM“
+//
+// ==== Entscheidung
+// Wir setzen konsequent auf eine native Kotlin-Desktop-Applikation, die auf der JVM läuft.
+//
+// ==== Konsequenzen
+// * **Vorteile:**
+// ** Volle Kotlin-Sprachfeatures und Interoperabilität mit Java-Bibliotheken.
+// ** Einfache Auslieferung als ausführbare JAR.
+// ** Gut integrierbar in IntelliJ/Gradle-Toolchain.
+// * **Nachteile:**
+// ** Keine unmittelbare Web- oder Mobile-Verfügbarkeit.
+// ** Endbenutzer benötigen eine JVM-Installation.
+//
+// ==== Alternativen
+// * Web-App mit Kotlin/JS (zusätzlicher Buildaufwand, begrenzte Performance für Echtzeit-Game).
+// * Kotlin Multiplatform Mobile (höherer Entwicklungsaufwand, unsichere Lauffähigkeit).
+//
+// === ADR 2: Auswahl des GUI-Frameworks – LibGDX mit KTX
+// [cols="1,1"]
+// |===
+// | Status        | Accepted
+// | Datum         | 2025-06-19
+// |===
+//
+// ==== Kontext
+// Die GUI-Technologie soll „nach Rücksprache mit dem SWE-Dozenten“ gewählt werden. Evaluierte Varianten:
+//
+// [cols="3,2",options="header"]
+// | Variante                                   | Entscheidung
+// | KorGe                                      | Abgelehnt
+// | Godot+Kotlin Plugin                        | Abgelehnt
+// | LibGDX (Java-basiert, Kotlin-tauglich)     | **Ausgewählt**
+// | LWJGL                                      | Abgelehnt
+//
+// ==== Entscheidung
+// Einsatz von **LibGDX** mit KTX-Erweiterungen für Grafik, Input und Audio.
+//
+// ==== Konsequenzen
+// * **Vorteile:**
+// ** Schneller Einstieg dank umfangreicher Tutorials und Community.
+// ** Direkte JVM-Kompatibilität, .jar-Export.
+// * **Nachteile:**
+// ** Wenig fertige High-Level-UI-Widgets → eigenes CI-konformes UI-Toolkit erforderlich.
+//
+// ==== Alternativen
+// * KorGe (zu jung, wenig Dokumentation).
+// * LWJGL (zu low-level, zu hoher Implementierungsaufwand).
+//
+// === ADR 3: Persistenzmechanismus – Datei und SQLite via JDBC
+// [cols="1,1"]
+// |===
+// | Status        | Accepted
+// | Datum         | 2025-06-19
+// |===
+//
+// ==== Kontext
+// Die Speicherung der Spieldaten soll wahlweise in Datei und in einer relationalen Datenbank erfolgen, wobei Dateispeicherung als Default:
+//
+// „Spieldaten … wahlweise in File und Datenbank speichern. Der Datenbankzugriff muss mit JDBC realisiert werden.“
+//
+// ==== Entscheidung
+// * Implementierung einer **FilePersistence** (JSON/CSV) als Standard.
+// * Implementierung einer **JdbcPersistence**, standardmäßig mit **SQLite** konfiguriert.
+//
+// ==== Konsequenzen
+// * **Vorteile:**
+// ** SQLite benötigt keinen Server, einfache Distribution.
+// ** Tests können gegen Datei- und DB-Implementierung isoliert durchgeführt werden.
+// * **Nachteile:**
+// ** SQLite ist wenig für gleichzeitige Schreibzugriffe optimiert (im Spielkontext unkritisch).
+//
+// ==== Alternativen
+// * Nur Dateispeicherung (eingeschränkte Skalierbarkeit).
+// * Verwendung eines externen DB-Servers (zu viel Administrationsaufwand).
+//
+// === ADR 4: Dokumentationsansatz – Docs-as-Code mit AsciiDoc & PlantUML
+// [cols="1,1"]
+// |===
+// | Status        | Accepted
+// | Datum         | 2025-06-19
+// |===
+//
+// ==== Kontext
+// Optional kann in der Dokumentation der Docs-as-Code-Ansatz verwendet werden:
+// „Auf Wunsch kann der Docs-as-Code Ansatz eingesetzt werden. Z.B.: mit AsciiDoc- und PlantUML-Plugins für IntelliJ.“
+//
+// ==== Entscheidung
+// Wir nutzen **AsciiDoc** für Text und **PlantUML** für Diagramme, eingebunden über IntelliJ-Plugins, und halten die Dokumentation versioniert im Git-Repo.
+//
+// ==== Konsequenzen
+// * **Vorteile:**
+// ** Versionskontrolle + automatisierte Diagrammgenerierung.
+// ** Einheitliche Templates für alle Sichten gemäß SWE-Lehrmittel.
+// * **Nachteile:**
+// ** Lernaufwand für Teammitglieder ohne AsciiDoc-Erfahrung.
+//
+// ==== Alternativen
+// * Klassische Word-Dokumentation (leichter zu starten, schwieriger in Git zu verwalten).
+// * Markdown + externe Diagramm-Tools (weniger weit verbreitet im SWE-Lehrmittel-Kontext).
+// ####

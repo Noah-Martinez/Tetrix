@@ -1,0 +1,59 @@
+@startuml
+title Bausteinsicht: Tetrix (detailliert)
+
+' Paketstruktur
+package "Tetrix" {
+  package "ui" {
+    component "MainWindow" as MW
+    component "GameCanvas" as GC
+    component "HighscoreView" as HV
+    interface "IUIRenderer" as IUI
+  }
+
+  package "core" {
+    component "InputHandler" as IH
+    component "CommandFactory" as CF
+    component "EventBus (Observer)" as EB
+    component "GameLoop (Singleton)" as GL
+    component "PhysicsEngine" as PE
+    component "GameState" as GS
+    component "ScoringService" as SS
+  }
+
+  package "persistence" {
+    interface "Persistence" as P
+    component "FilePersistence" as FP
+    component "JdbcPersistence" as JP
+    component "PersistenceFactory (Factory)" as PF
+    interface "DBConnection" as DBC
+    component "SQLiteConnection" as SC
+  }
+}
+
+' UI-Interaktionen
+MW --> GC : render(GameState) «IUIRenderer»
+MW --> HV : render(Highscores) «IUIRenderer»
+IH --> CF : createCommand(inputEvent)
+CF --> IH : returns Command
+IH --> EB : publish(Command)
+EB --> GL : subscribe & dispatch(Command)
+
+' Spielmechanik
+GL --> PE : updatePhysics(GameState)
+PE --> GL : collisionEvents
+GL --> SS : notify(scoreEvent)
+GL --> GS : updateState()
+
+' Highscore-Workflow
+SS ..> P  : «use» save()/load()
+MW --> SS : requestHighscores()
+
+' Persistenz
+PF --> FP
+PF --> JP
+JP --> DBC : uses
+FP ..|> P
+JP ..|> P
+SC ..|> DBC : implements
+
+@enduml

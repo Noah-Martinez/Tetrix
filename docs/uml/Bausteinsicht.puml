@@ -1,0 +1,62 @@
+@startuml
+title Bausteinsicht: Tetrix (detailliert)
+
+package "Tetrix" {
+  package "core" {
+    component "Game" as Game
+    component "AssetManager" as AM
+
+    component "GameScreen" as GScreen
+    component "GameField" as GField
+    component "CubeShape" as CS
+    component "Cube" as Cube
+
+    component "GameOverStage" as GOStage
+    component "HighScoreWidget" as HSWidget
+    component "ScoreWidget" as SWidget
+    component "NextShapeWidget" as NSWidget
+    component "StatWidget" as StatWidget
+
+    component "LoadingScreen" as LS
+    component "MenuScreen" as MS
+    component "OptionsScreen" as OS
+    component "ScoreService" as SService
+    component "ScoreScreen" as SScreen
+  }
+
+  package "scoreboard" {
+    interface "Scoreboard" as SI
+    component "ScoreboardCsv" as SC
+    component "ScoreboardDatabase" as SD
+    component "ScoreboardFactory (Factory)" as SF
+  }
+}
+
+Game --> AM
+Game --> GScreen
+GScreen --> GField
+GScreen --> StatWidget
+GField --> SService
+GField --> CS
+CS --> Cube
+GScreen --> GOStage
+GScreen --> HSWidget
+GScreen --> SWidget
+GScreen --> NSWidget
+
+
+Game --> LS
+Game --> MS
+Game --> OS
+Game --> SScreen
+SScreen --> SService
+
+SService --> SF
+
+' Persistenz
+SF --> SD
+SF --> SC
+SD ..|> SI
+SC ..|> SI : implements
+
+@enduml
