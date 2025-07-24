@@ -1,7 +1,34 @@
 package ch.tetrix.assets
 
+import com.badlogic.gdx.assets.AssetDescriptor
+import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.graphics.Color
+import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter
+import com.badlogic.gdx.graphics.g2d.freetype.FreetypeFontLoader
+import ktx.assets.Asset
+import ktx.assets.getAsset
+import ktx.assets.loadAsset
+
+operator fun AssetManager.get(asset: FontAssets): BitmapFont = getAsset<BitmapFont>(getFontKey(asset))
+
+// NOTE: had to use a custom font key, in case the same font file with different configs is used
+// (freeTypeFontLoader uses filename as the default asset name)
+private fun getFontKey(asset: FontAssets) = "${asset.path}-${asset.name}"
+fun AssetManager.load(asset: FontAssets): Asset<BitmapFont> {
+    val params = FreetypeFontLoader.FreeTypeFontLoaderParameter().apply {
+        fontFileName = asset.path
+        asset.params(this.fontParameters)
+    }
+
+    val descriptor = AssetDescriptor(
+        getFontKey(asset),
+        BitmapFont::class.java,
+        params
+    )
+
+    return loadAsset(descriptor)
+}
 
 enum class FontAssets(
     val path: String,
