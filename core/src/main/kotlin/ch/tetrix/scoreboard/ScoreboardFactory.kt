@@ -15,7 +15,7 @@ object ScoreboardFactory {
     }
 
     // Map to store scoreboard instances by type
-    private val scoreboardInstances = mutableMapOf<StorageType, Scoreboard>()
+    private val scoreboardRepositoryInstances = mutableMapOf<StorageType, ScoreboardRepository>()
 
     /**
      * Gets a Scoreboard instance of the specified type.
@@ -25,9 +25,9 @@ object ScoreboardFactory {
      * @param location Optional location for the scoreboard storage.
      * @return A Scoreboard instance of the specified type.
      */
-    fun getScoreboard(type: StorageType, location: String = ""): Scoreboard {
+    fun getScoreboard(type: StorageType, location: String = ""): ScoreboardRepository {
         // If we already have a scoreboard instance of this type, return it
-        scoreboardInstances[type]?.let { return it }
+        scoreboardRepositoryInstances[type]?.let { return it }
 
         // Otherwise, create a new instance based on the specified type
         val scoreboard = when (type) {
@@ -39,7 +39,7 @@ object ScoreboardFactory {
         scoreboard.init(location)
 
         // Store the instance for future use
-        scoreboardInstances[type] = scoreboard
+        scoreboardRepositoryInstances[type] = scoreboard
 
         return scoreboard
     }

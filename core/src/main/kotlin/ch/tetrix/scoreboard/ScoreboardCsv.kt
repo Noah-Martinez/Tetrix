@@ -6,7 +6,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 
-object ScoreboardCsv: Scoreboard {
+object ScoreboardCsv: ScoreboardRepository {
     private const val DEFAULT_CSV = "scoreboard.csv"
     private val PROJECT_ROOT: Path = Paths.get(System.getProperty("user.dir"))
     private val CSV_PATH: Path get() = PROJECT_ROOT.resolve(DEFAULT_CSV)
