@@ -8,15 +8,15 @@ import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.g2d.Batch
 import ktx.app.KtxScreen
+import ktx.inject.Context
 
-class LoadingScreen(
-    private val game: Game,
-    private val batch: Batch,
-    private val assets: AssetManager,
-    private val camera: OrthographicCamera
-) : KtxScreen {
+class LoadingScreen(val context: Context) : KtxScreen {
+    private val game: Game = context.inject()
+    private val batch: Batch = context.inject()
+    private val assets: AssetManager = context.inject()
+    private val camera: OrthographicCamera = context.inject()
 
-    private val loadingOverlay = LoadingOverlay()
+    private val loadingOverlay = LoadingOverlay(context)
     private var loadingComplete = false
 
     override fun show() {
@@ -27,7 +27,6 @@ class LoadingScreen(
             navigateToMainMenu()
         }
 
-        Gdx.input.inputProcessor = loadingOverlay.stage
     }
 
     private fun loadAssets() {
@@ -61,7 +60,7 @@ class LoadingScreen(
     }
 
     private fun navigateToMainMenu() {
-        Gdx.input.inputProcessor = null
+        dispose()
         game.removeScreen<LoadingScreen>()
         game.setScreen<MainMenuScreen>()
     }
@@ -73,6 +72,5 @@ class LoadingScreen(
 
     override fun dispose() {
         loadingOverlay.dispose()
-        super.dispose()
     }
 }

@@ -4,9 +4,7 @@ import ch.tetrix.GameConstants
 import ch.tetrix.assets.SkinAssets
 import ch.tetrix.assets.get
 import ch.tetrix.assets.load
-import ch.tetrix.game.CubeManager
 import ch.tetrix.scoreboard.ScoreboardFactory
-import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.InputMultiplexer
 import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.scenes.scene2d.InputEvent
@@ -16,23 +14,23 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener
 import com.badlogic.gdx.utils.viewport.FitViewport
+import ktx.inject.Context
 
 /**
  * Manages the UI elements of the game.
  */
-class UIManager(
-    private val cubeManager: CubeManager,
-    asset: AssetManager,
-) {
+class UIManager(context: Context) {
+    private val assets: AssetManager = context.inject()
+    private val inputMultiplexer: InputMultiplexer = context.inject()
     private val stage = Stage(FitViewport(GameConstants.WORLD_WIDTH, GameConstants.WORLD_HEIGHT))
     private val skin: Skin
 
     init {
         // TODO: load all necessary assets at one point, maybe using a splashscreen with an image only
-        asset.load(SkinAssets.Default).finishLoading()
-        skin = asset[SkinAssets.Default]
+        assets.load(SkinAssets.Default).finishLoading()
+        skin = assets[SkinAssets.Default]
         setupUI()
-        Gdx.input.inputProcessor = InputMultiplexer(stage)
+        inputMultiplexer.addProcessor(stage)
     }
 
     /**
@@ -56,18 +54,18 @@ class UIManager(
         stage.addActor(table)
 
         // Move cube left
-        leftButton.addListener(object : ClickListener() {
-            override fun clicked(event: InputEvent?, x: Float, y: Float) {
-                cubeManager.moveActiveLeft()
-            }
-        })
-
-        // Move cube right
-        rightButton.addListener(object : ClickListener() {
-            override fun clicked(event: InputEvent?, x: Float, y: Float) {
-                cubeManager.moveActiveRight()
-            }
-        })
+//        leftButton.addListener(object : ClickListener() {
+//            override fun clicked(event: InputEvent?, x: Float, y: Float) {
+//                cubeManager.moveActiveLeft()
+//            }
+//        })
+//
+//        // Move cube right
+//        rightButton.addListener(object : ClickListener() {
+//            override fun clicked(event: InputEvent?, x: Float, y: Float) {
+//                cubeManager.moveActiveRight()
+//            }
+//        })
 
         // Add random score
         addScoreBtn.addListener(object : ClickListener() {
@@ -116,6 +114,7 @@ class UIManager(
      * Disposes of resources used by the UI manager.
      */
     fun dispose() {
+        inputMultiplexer.removeProcessor(stage)
         stage.dispose()
     }
 }

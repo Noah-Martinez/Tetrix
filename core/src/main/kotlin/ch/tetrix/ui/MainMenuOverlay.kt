@@ -4,6 +4,7 @@ import BaseOverlay
 import ch.tetrix.Game
 import ch.tetrix.screens.GameScreen
 import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.InputMultiplexer
 import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.graphics.Pixmap
 import com.badlogic.gdx.graphics.Texture
@@ -15,16 +16,18 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable
+import ktx.inject.Context
 import ktx.scene2d.Scene2DSkin
 
-class MainMenuOverlay(
-    private val assets: AssetManager,
-    private val game: Game
-) : BaseOverlay() {
+class MainMenuOverlay(context: Context) : BaseOverlay() {
+    private val game: Game  = context.inject()
+    private val assets: AssetManager  = context.inject()
+    private val inputMultiplexer: InputMultiplexer  = context.inject()
 
     private lateinit var mainTable: Table
 
     init {
+        inputMultiplexer.addProcessor(stage)
         setupMainMenuOverlay()
     }
 
@@ -78,5 +81,10 @@ class MainMenuOverlay(
         val texture = Texture(pixmap)
         pixmap.dispose()
         return TextureRegionDrawable(TextureRegion(texture))
+    }
+
+    override fun dispose() {
+        super.dispose()
+        inputMultiplexer.removeProcessor(stage)
     }
 }

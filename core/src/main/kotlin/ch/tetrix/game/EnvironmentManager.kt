@@ -8,11 +8,13 @@ import com.badlogic.gdx.graphics.g3d.ModelBatch
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight
 import com.badlogic.gdx.utils.viewport.FitViewport
+import ktx.inject.Context
 
 /**
  * Manages the 3D environment for the game.
  */
-class EnvironmentManager(private var camera: OrthographicCamera) {
+class EnvironmentManager(context: Context) {
+    private val camera: OrthographicCamera = context.inject()
     private val modelBatch = ModelBatch()
     private val environment = Environment().apply {
         set(ColorAttribute.createAmbientLight(0.8f, 0.8f, 0.8f, 1f))
@@ -30,7 +32,7 @@ class EnvironmentManager(private var camera: OrthographicCamera) {
     }
 
     private fun setupCamera() {
-        this.camera.apply {
+        camera.apply {
             position.set(5f, 10f, 10f)
             lookAt(5f, 10f, 0f)
             update()

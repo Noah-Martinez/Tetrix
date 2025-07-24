@@ -2,13 +2,17 @@ package ch.tetrix.ui
 
 import BaseOverlay
 import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.InputMultiplexer
 import com.badlogic.gdx.scenes.scene2d.ui.Label
 import com.badlogic.gdx.scenes.scene2d.ui.ProgressBar
 import com.badlogic.gdx.scenes.scene2d.ui.Table
 import com.badlogic.gdx.utils.viewport.ScreenViewport
+import ktx.inject.Context
 import ktx.scene2d.Scene2DSkin
 
-class LoadingOverlay : BaseOverlay() {
+class LoadingOverlay(val context: Context) : BaseOverlay() {
+    private val inputMultiplexer: InputMultiplexer = context.inject()
+
     private lateinit var progressBar: ProgressBar
     private lateinit var statusLabel: Label
     private lateinit var percentLabel: Label
@@ -16,6 +20,7 @@ class LoadingOverlay : BaseOverlay() {
     private lateinit var waitLabel: Label
 
     init {
+        inputMultiplexer.addProcessor(stage)
         stage.viewport = ScreenViewport()
         setupUI()
     }
@@ -80,5 +85,10 @@ class LoadingOverlay : BaseOverlay() {
                 false
             }
         }
+    }
+
+    override fun dispose() {
+        super.dispose()
+        inputMultiplexer.removeProcessor(stage)
     }
 }
