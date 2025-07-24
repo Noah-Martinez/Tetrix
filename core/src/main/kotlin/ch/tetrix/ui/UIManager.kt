@@ -2,9 +2,9 @@ package ch.tetrix.ui
 
 import ch.tetrix.GameConstants
 import ch.tetrix.assets.SkinAssets
+import ch.tetrix.assets.get
+import ch.tetrix.assets.load
 import ch.tetrix.game.CubeManager
-import ch.tetrix.get
-import ch.tetrix.load
 import ch.tetrix.scoreboard.ScoreboardFactory
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.InputMultiplexer
@@ -22,7 +22,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport
  */
 class UIManager(
     private val cubeManager: CubeManager,
-    private val asset: AssetManager,
+    asset: AssetManager,
 ) {
     private val stage = Stage(FitViewport(GameConstants.WORLD_WIDTH, GameConstants.WORLD_HEIGHT))
     private val skin: Skin

@@ -2,6 +2,7 @@ package ch.tetrix
 
 import ch.tetrix.assets.FontAssets
 import ch.tetrix.assets.SkinAssets
+import ch.tetrix.assets.load
 import ch.tetrix.screens.GameScreen
 import ch.tetrix.screens.LoadingScreen
 import ch.tetrix.screens.MainMenuScreen
@@ -31,9 +32,15 @@ class Game : KtxGame<KtxScreen>() {
     private val assets = AssetManager()
 
     override fun create() {
-        context.register {
-            bindSingleton(assets)
+        contextRegister()
+        setScreen<LoadingScreen>()
+        super.create()
+    }
 
+    private fun contextRegister() {
+        context.register {
+
+            bindSingleton(assets)
             assets.registerFreeTypeFontLoaders(replaceDefaultBitmapFontLoader = true)
             val defaultFont = assets.load(FontAssets.Default)
             defaultFont.finishLoading()
@@ -53,9 +60,6 @@ class Game : KtxGame<KtxScreen>() {
             addScreen(GameScreen(inject(), inject(), inject(), inject(), inject()))
             addScreen(MainMenuScreen(this@Game, inject(), inject(), inject())) // Add MainMenuScreen
         }
-
-        setScreen<LoadingScreen>()
-        super.create()
     }
 
     override fun dispose() {
