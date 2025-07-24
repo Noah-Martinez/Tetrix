@@ -7,6 +7,8 @@ import ch.tetrix.screens.GameScreen
 import ch.tetrix.screens.LoadingScreen
 import ch.tetrix.screens.MainMenuScreen
 import com.badlogic.ashley.core.PooledEngine
+import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.InputMultiplexer
 import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.g2d.Batch
@@ -28,44 +30,55 @@ object GameConstants {
 }
 
 class Game : KtxGame<KtxScreen>() {
+    // Global context for dependency injection
     private val context = Context()
     private val assets = AssetManager()
 
+    private val defaultFont = assets.load(FontAssets.Default)
+
     override fun create() {
-        contextRegister()
-        setScreen<LoadingScreen>()
         super.create()
+        contextRegister()
+
+        addScreen(LoadingScreen(context))
+        addScreen(GameScreen(context))
+        addScreen(MainMenuScreen(context)) // Add MainMenuScreen
+
+        setScreen<LoadingScreen>()
     }
 
     private fun contextRegister() {
         context.register {
 
-            bindSingleton(assets)
+            bindSingleton<Game>(this@Game)
+            bindSingleton<Batch>(SpriteBatch())
+            bindSingleton<AssetManager>(assets)
+            bindSingleton<PooledEngine>(PooledEngine())
+            bindSingleton<OrthographicCamera>(OrthographicCamera().apply {
+                setToOrtho(true)
+            })
+
+            // load font asset:
             assets.registerFreeTypeFontLoaders(replaceDefaultBitmapFontLoader = true)
-            val defaultFont = assets.load(FontAssets.Default)
             defaultFont.finishLoading()
             bindSingleton<BitmapFont>(defaultFont.asset)
 
-            bindSingleton<Batch>(SpriteBatch())
-            bindSingleton(OrthographicCamera().apply {
-                setToOrtho(false, GameConstants.WORLD_WIDTH, GameConstants.WORLD_HEIGHT)
-            })
-            bindSingleton(PooledEngine())
-
+            // load default skin asset:
             val defaultSkin = assets.load(SkinAssets.Default)
             defaultSkin.finishLoading()
             Scene2DSkin.defaultSkin = defaultSkin.asset
 
-            addScreen(LoadingScreen(this@Game, inject(), inject(), inject()))
-            addScreen(GameScreen(inject(), inject(), inject(), inject(), inject()))
-            addScreen(MainMenuScreen(this@Game, inject(), inject(), inject())) // Add MainMenuScreen
+            // set input multiplexer
+            val inputMultiplexer = InputMultiplexer()
+            Gdx.input.inputProcessor = inputMultiplexer
+            bindSingleton<InputMultiplexer>(inputMultiplexer)
         }
     }
 
     override fun dispose() {
-        log.debug { "Entities in engine: ${context.inject<PooledEngine>().entities.size()}" }
-        context.remove<AssetManager>()
-        context.dispose()
         super.dispose()
+        log.debug { "Entities in engine: ${context.inject<PooledEngine>().entities.size()}" }
+        context.remove<Game>() // prevent self call
+        context.dispose()
     }
 }

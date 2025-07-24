@@ -1,30 +1,18 @@
 package ch.tetrix.screens
 
-import ch.tetrix.Game
 import ch.tetrix.ui.MainMenuOverlay
 import com.badlogic.gdx.Gdx
-import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.graphics.GL20
-import com.badlogic.gdx.graphics.g2d.Batch
-import com.badlogic.gdx.graphics.g2d.BitmapFont
 import ktx.app.KtxScreen
+import ktx.inject.Context
 
-class MainMenuScreen(
-    private val game: Game,
-    private val batch: Batch,
-    private val font: BitmapFont,
-    private val assets: AssetManager
-) : KtxScreen {
-
+class MainMenuScreen(val context: Context) : KtxScreen {
     private lateinit var mainMenuOverlay: MainMenuOverlay
 
     override fun show() {
         // Initialize the overlay when the screen is shown
-        mainMenuOverlay = MainMenuOverlay(assets, game)
+        mainMenuOverlay = MainMenuOverlay(context)
         mainMenuOverlay.show()
-
-        // Set the input processor to handle UI interactions
-        Gdx.input.inputProcessor = mainMenuOverlay.stage
     }
 
     override fun render(delta: Float) {
