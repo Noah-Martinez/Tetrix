@@ -1,9 +1,8 @@
 package ch.tetrix.game.actors
 
-import ch.tetrix.game.stages.GameField
+import ch.tetrix.game.ui.GameField
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.scenes.scene2d.Group
-import com.badlogic.gdx.scenes.scene2d.Stage
 import ktx.inject.Context
 
 /**
@@ -26,16 +25,16 @@ class CubeShape(
         get() = _gridPos
 
     private val grid
-        get() = stage as GameField? ?: error("Cube must be added to a Stage before using grid")
+        get() = parent as GameField? ?: error("Cube must be added to a Stage before using grid")
 
     init {
         isTransform = true
     }
 
-    override fun setStage(stage: Stage?) {
-        super.setStage(stage)
+    override fun setParent(parent: Group?) {
+        super.setParent(parent)
 
-        if (stage == null) {
+        if (parent == null) {
             // dispose of stage
             return
         }

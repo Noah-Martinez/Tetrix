@@ -1,12 +1,16 @@
-package ch.tetrix.screens
+package ch.tetrix.loading
 
 import ch.tetrix.Game
-import ch.tetrix.ui.LoadingOverlay
+import ch.tetrix.game.GameScreen
+import ch.tetrix.menu.MainMenuScreen
 import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.InputMultiplexer
 import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.g2d.Batch
+import com.badlogic.gdx.scenes.scene2d.Stage
+import com.badlogic.gdx.utils.viewport.ScreenViewport
 import ktx.app.KtxScreen
 import ktx.inject.Context
 
@@ -15,18 +19,21 @@ class LoadingScreen(val context: Context) : KtxScreen {
     private val batch: Batch = context.inject()
     private val assets: AssetManager = context.inject()
     private val camera: OrthographicCamera = context.inject()
+    private val stage = Stage(ScreenViewport())
+    private val inputMultiplexer: InputMultiplexer = context.inject()
 
-    private val loadingOverlay = LoadingOverlay(context)
+    private lateinit var loadingUI: LoadingUI
     private var loadingComplete = false
 
     override fun show() {
         loadAssets()
 
-        loadingOverlay.show()
-        loadingOverlay.addClickListener {
+        inputMultiplexer.addProcessor(stage)
+        loadingUI = LoadingUI(context)
+        stage.addActor(loadingUI)
+        loadingUI.addClickListener {
             navigateToMainMenu()
         }
-
     }
 
     private fun loadAssets() {
@@ -46,31 +53,33 @@ class LoadingScreen(val context: Context) : KtxScreen {
         val assetsFinished = assets.update()
         val progress = assets.progress
 
-        loadingOverlay.updateProgress(progress, assetsFinished)
+        loadingUI.updateProgress(progress, assetsFinished)
 
         camera.update()
         batch.projectionMatrix = camera.combined
-
-        loadingOverlay.render(delta)
+        stage.act(delta)
+        stage.draw()
 
         if (assetsFinished && !loadingComplete) {
             loadingComplete = true
-            loadingOverlay.setLoadingComplete()
+            loadingUI.setLoadingComplete()
         }
     }
 
     private fun navigateToMainMenu() {
         dispose()
+        game.addScreen(GameScreen(context))
         game.removeScreen<LoadingScreen>()
         game.setScreen<MainMenuScreen>()
     }
 
 
     override fun resize(width: Int, height: Int) {
-        loadingOverlay.resize(width, height)
+        stage.viewport.update(width, height)
     }
 
     override fun dispose() {
-        loadingOverlay.dispose()
+        inputMultiplexer.removeProcessor(stage)
+        stage.dispose()
     }
 }

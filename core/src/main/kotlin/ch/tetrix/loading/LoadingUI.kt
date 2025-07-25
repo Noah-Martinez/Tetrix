@@ -1,17 +1,12 @@
-package ch.tetrix.ui
+package ch.tetrix.loading
 
-import BaseOverlay
-import com.badlogic.gdx.Gdx
-import com.badlogic.gdx.InputMultiplexer
 import com.badlogic.gdx.scenes.scene2d.ui.Label
 import com.badlogic.gdx.scenes.scene2d.ui.ProgressBar
 import com.badlogic.gdx.scenes.scene2d.ui.Table
-import com.badlogic.gdx.utils.viewport.ScreenViewport
 import ktx.inject.Context
 import ktx.scene2d.Scene2DSkin
 
-class LoadingOverlay(val context: Context) : BaseOverlay() {
-    private val inputMultiplexer: InputMultiplexer = context.inject()
+class LoadingUI(val context: Context) : Table() {
 
     private lateinit var progressBar: ProgressBar
     private lateinit var statusLabel: Label
@@ -20,13 +15,11 @@ class LoadingOverlay(val context: Context) : BaseOverlay() {
     private lateinit var waitLabel: Label
 
     init {
-        inputMultiplexer.addProcessor(stage)
-        stage.viewport = ScreenViewport()
         setupUI()
     }
 
     private fun setupUI() {
-        stage.clear()
+        setFillParent(true)
 
         // Create all labels first
         welcomeLabel = Label("Welcome to Tetrix!!!", Scene2DSkin.defaultSkin, "title")
@@ -37,19 +30,15 @@ class LoadingOverlay(val context: Context) : BaseOverlay() {
         progressBar = ProgressBar(0f, 1f, 0.01f, false, Scene2DSkin.defaultSkin)
         progressBar.setAnimateDuration(0.1f)
 
-        val table = Table()
-        table.setFillParent(true)
-        table.center()
-        table.defaults().pad(10f)
+        setFillParent(true)
+        center()
+        defaults().pad(10f)
 
-        table.add(welcomeLabel).colspan(2).padBottom(30f).row()
-        table.add(statusLabel).colspan(2).padBottom(10f).row()
-        table.add(progressBar).expandX().center().width(300f).height(20f).padBottom(10f).row()
-        table.add(percentLabel).colspan(2).padBottom(20f).row()
-        table.add(waitLabel).colspan(2)
-
-        stage.addActor(table)
-        stage.viewport.update(Gdx.graphics.width, Gdx.graphics.height, true)
+        add(welcomeLabel).colspan(2).padBottom(30f).row()
+        add(statusLabel).colspan(2).padBottom(10f).row()
+        add(progressBar).expandX().center().width(300f).height(20f).padBottom(10f).row()
+        add(percentLabel).colspan(2).padBottom(20f).row()
+        add(waitLabel).colspan(2)
     }
 
     fun updateProgress(progress: Float, assetsFinished: Boolean) {
@@ -85,10 +74,5 @@ class LoadingOverlay(val context: Context) : BaseOverlay() {
                 false
             }
         }
-    }
-
-    override fun dispose() {
-        super.dispose()
-        inputMultiplexer.removeProcessor(stage)
     }
 }

@@ -1,6 +1,6 @@
 package ch.tetrix.game.actors
 
-import ch.tetrix.game.stages.GameField
+import ch.tetrix.game.ui.GameField
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.graphics.g3d.Environment
@@ -23,7 +23,7 @@ class Cube(
     val shape
         get() = parent as CubeShape? ?: error("Cube must be added to a Shape before using shape")
     val grid
-        get() = stage as GameField? ?: error("Cube must be added to a Stage before using grid")
+        get() = parent.parent as GameField? ?: error("Cube must be added to a Stage before using grid")
     val gridPos: GridPosition
         get() = shape.gridPos + localPos
 
@@ -83,11 +83,7 @@ class Cube(
         }
 
         val nextPosCube = grid.cubes[gridPos]
-        if (nextPosCube != null && nextPosCube !in shape.cubes) {
-            return false
-        }
-
-        return true
+        return !(nextPosCube != null && nextPosCube !in shape.cubes)
     }
 
     override fun draw(batch: Batch, parentAlpha: Float) {
