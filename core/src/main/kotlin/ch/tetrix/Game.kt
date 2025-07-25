@@ -3,9 +3,8 @@ package ch.tetrix
 import ch.tetrix.assets.FontAssets
 import ch.tetrix.assets.SkinAssets
 import ch.tetrix.assets.load
-import ch.tetrix.screens.GameScreen
-import ch.tetrix.screens.LoadingScreen
-import ch.tetrix.screens.MainMenuScreen
+import ch.tetrix.loading.LoadingScreen
+import ch.tetrix.menu.MainMenuScreen
 import com.badlogic.ashley.core.PooledEngine
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.InputMultiplexer
@@ -41,8 +40,7 @@ class Game : KtxGame<KtxScreen>() {
         contextRegister()
 
         addScreen(LoadingScreen(context))
-        addScreen(GameScreen(context))
-        addScreen(MainMenuScreen(context)) // Add MainMenuScreen
+        addScreen(MainMenuScreen(context))
 
         setScreen<LoadingScreen>()
     }
