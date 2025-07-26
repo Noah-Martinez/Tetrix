@@ -31,19 +31,42 @@ fun AssetManager.load(asset: FontAssets): Asset<BitmapFont> {
 }
 
 enum class FontAssets(
+    /** name to be loaded into the skin (must be unique) */
+    val skinName: String,
     val path: String,
     val params: FreeTypeFontParameter.() -> Unit
 ) {
     Default(
+        "press-start-2p",
         "fonts/PressStart2P-Regular.ttf",
         {
             size = 12
+            mono = true
+        }
+    ),
+    Large(
+        "large",
+        "fonts/PressStart2P-Regular.ttf",
+        {
+            size = 20
+            mono = true
         }
     ),
     Title(
+        "title",
         "fonts/PressStart2P-Regular.ttf",
         {
-            size = 24
+            size = 28
+            mono = true
+        }
+    ),
+    TitleLarge(
+        "title-large",
+        "fonts/PressStart2P-Regular.ttf",
+        {
+            size = 48
+            mono = true
+            spaceX = 12
             shadowColor = Color(Color.WHITE.r, Color.WHITE.g, Color.WHITE.b, 0.08f)
             shadowOffsetX = 5
             shadowOffsetY = 5

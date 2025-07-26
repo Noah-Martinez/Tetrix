@@ -17,10 +17,9 @@ fun createMenuComponent(
 ) : KTableWidget {
     return KTableWidget(skin).apply {
         row().expand().pad(20f)
-        label("TETRIX").setFontScale(5f)
+        label("TETRIX", "title-large")
         row().width(300f).height(52f).pad(12f)
-        textButton("START GAME").apply {
-            label.setFontScale(1.5f)
+        textButton("START GAME", "large").apply {
             onClick { onStart() }
         }
         row()

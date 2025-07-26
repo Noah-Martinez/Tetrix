@@ -1,6 +1,5 @@
 package ch.tetrix
 
-import ch.tetrix.assets.FontAssets
 import ch.tetrix.assets.SkinAssets
 import ch.tetrix.assets.load
 import ch.tetrix.loading.LoadingScreen
@@ -11,7 +10,6 @@ import com.badlogic.gdx.InputMultiplexer
 import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.g2d.Batch
-import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import ktx.app.KtxGame
 import ktx.app.KtxScreen
@@ -27,21 +25,22 @@ class Game : KtxGame<KtxScreen>() {
     private val context = Context()
     private val assets = AssetManager()
 
-    private val defaultFont = assets.load(FontAssets.Default)
-
     companion object {
         private val log = logger<Game>()
     }
 
     override fun create() {
         super.create()
+
+        // register FreeTypeFont loader:
+        assets.registerFreeTypeFontLoaders(replaceDefaultBitmapFontLoader = true)
+
         contextRegister()
 
         addScreen(LoadingScreen(context))
         addScreen(MainMenuScreen(context))
 
         setScreen<LoadingScreen>()
-        super.create()
     }
 
     private fun contextRegister() {
@@ -53,11 +52,6 @@ class Game : KtxGame<KtxScreen>() {
             bindSingleton<OrthographicCamera>(OrthographicCamera().apply {
                 setToOrtho(true)
             })
-
-            // load font asset:
-            assets.registerFreeTypeFontLoaders(replaceDefaultBitmapFontLoader = true)
-            defaultFont.finishLoading()
-            bindSingleton<BitmapFont>(defaultFont.asset)
 
             // load default skin asset:
             val defaultSkin = assets.load(SkinAssets.Default)
