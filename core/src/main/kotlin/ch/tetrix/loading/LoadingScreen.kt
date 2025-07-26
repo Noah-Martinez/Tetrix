@@ -1,33 +1,32 @@
 package ch.tetrix.loading
 
 import ch.tetrix.Game
-import ch.tetrix.game.GameScreen
-import ch.tetrix.menu.MainMenuScreen
-import com.badlogic.gdx.Gdx
+import ch.tetrix.mainmenu.MainMenuScreen
 import com.badlogic.gdx.InputMultiplexer
 import com.badlogic.gdx.assets.AssetManager
-import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.scenes.scene2d.Stage
 import com.badlogic.gdx.utils.viewport.ScreenViewport
 import ktx.app.KtxScreen
+import ktx.app.clearScreen
 import ktx.inject.Context
 
-class LoadingScreen(val context: Context) : KtxScreen {
+class LoadingScreen(private val context: Context) : KtxScreen {
     private val game: Game = context.inject()
     private val batch: Batch = context.inject()
     private val assets: AssetManager = context.inject()
     private val camera: OrthographicCamera = context.inject()
-    private val stage = Stage(ScreenViewport())
+
+    private val screenViewport = ScreenViewport()
+
+    private val stage = Stage(screenViewport, batch)
     private val inputMultiplexer: InputMultiplexer = context.inject()
 
     private lateinit var loadingUI: LoadingUI
     private var loadingComplete = false
 
     override fun show() {
-        loadAssets()
-
         inputMultiplexer.addProcessor(stage)
         loadingUI = LoadingUI(context)
         stage.addActor(loadingUI)
@@ -36,19 +35,8 @@ class LoadingScreen(val context: Context) : KtxScreen {
         }
     }
 
-    private fun loadAssets() {
-        // MusicAssets.entries.forEach { assets.load(it) }
-        // SoundAssets.entries.forEach { assets.load(it) }
-        // TextureAtlasAssets.entries.forEach { assets.load(it) }
-
-        // assets.load("textures/player.png", Texture::class.java)
-        // assets.load("audio/background.mp3", Music::class.java)
-        // assets.load("sounds/click.wav", Sound::class.java)
-    }
-
     override fun render(delta: Float) {
-        Gdx.gl.glClearColor(0.1f, 0.1f, 0.2f, 1f)
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
+        clearScreen(red = 0.1f, green = 0.12f, blue = 0.15f, alpha = 1f)
 
         val assetsFinished = assets.update()
         val progress = assets.progress
@@ -57,6 +45,8 @@ class LoadingScreen(val context: Context) : KtxScreen {
 
         camera.update()
         batch.projectionMatrix = camera.combined
+
+        stage.viewport.apply()
         stage.act(delta)
         stage.draw()
 
@@ -66,20 +56,19 @@ class LoadingScreen(val context: Context) : KtxScreen {
         }
     }
 
+    override fun resize(width: Int, height: Int) {
+        stage.viewport.update(width, height, true)
+    }
+
     private fun navigateToMainMenu() {
-        dispose()
-        game.addScreen(GameScreen(context))
         game.removeScreen<LoadingScreen>()
+        dispose()
         game.setScreen<MainMenuScreen>()
     }
 
-
-    override fun resize(width: Int, height: Int) {
-        stage.viewport.update(width, height)
-    }
-
     override fun dispose() {
-        inputMultiplexer.removeProcessor(stage)
+        super.dispose()
         stage.dispose()
+        inputMultiplexer.removeProcessor(stage)
     }
 }

@@ -3,6 +3,7 @@ package ch.tetrix.loading
 import com.badlogic.gdx.scenes.scene2d.ui.Label
 import com.badlogic.gdx.scenes.scene2d.ui.ProgressBar
 import com.badlogic.gdx.scenes.scene2d.ui.Table
+import ktx.actors.onClick
 import ktx.inject.Context
 import ktx.scene2d.Scene2DSkin
 
@@ -66,13 +67,7 @@ class LoadingUI(val context: Context) : Table() {
     }
 
     fun addClickListener(onClickAction: () -> Unit) {
-        stage.addListener { event ->
-            if (event.toString().contains("touchDown") || event.toString().contains("keyDown")) {
-                onClickAction()
-                true
-            } else {
-                false
-            }
-        }
+        touchable = com.badlogic.gdx.scenes.scene2d.Touchable.enabled
+        onClick { onClickAction() }
     }
 }

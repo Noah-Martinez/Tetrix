@@ -4,7 +4,7 @@ import ch.tetrix.assets.FontAssets
 import ch.tetrix.assets.SkinAssets
 import ch.tetrix.assets.load
 import ch.tetrix.loading.LoadingScreen
-import ch.tetrix.menu.MainMenuScreen
+import ch.tetrix.mainmenu.MainMenuScreen
 import com.badlogic.ashley.core.PooledEngine
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.InputMultiplexer
@@ -21,19 +21,17 @@ import ktx.inject.register
 import ktx.log.logger
 import ktx.scene2d.Scene2DSkin
 
-private val log = logger<Game>()
-
-object GameConstants {
-    const val WORLD_WIDTH  = 10f
-    const val WORLD_HEIGHT = 20f
-}
-
 class Game : KtxGame<KtxScreen>() {
-    // Global context for dependency injection
+    private val batch: Batch by lazy { SpriteBatch() }
+
     private val context = Context()
     private val assets = AssetManager()
 
     private val defaultFont = assets.load(FontAssets.Default)
+
+    companion object {
+        private val log = logger<Game>()
+    }
 
     override fun create() {
         super.create()
@@ -43,13 +41,13 @@ class Game : KtxGame<KtxScreen>() {
         addScreen(MainMenuScreen(context))
 
         setScreen<LoadingScreen>()
+        super.create()
     }
 
     private fun contextRegister() {
         context.register {
-
             bindSingleton<Game>(this@Game)
-            bindSingleton<Batch>(SpriteBatch())
+            bindSingleton<Batch>(batch)
             bindSingleton<AssetManager>(assets)
             bindSingleton<PooledEngine>(PooledEngine())
             bindSingleton<OrthographicCamera>(OrthographicCamera().apply {
