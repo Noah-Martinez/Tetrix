@@ -11,6 +11,7 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport
 import ktx.app.KtxScreen
 import ktx.app.clearScreen
 import ktx.inject.Context
+import ktx.scene2d.Scene2DSkin
 
 class LoadingScreen(private val context: Context) : KtxScreen {
     private val game: Game = context.inject()
@@ -36,7 +37,8 @@ class LoadingScreen(private val context: Context) : KtxScreen {
     }
 
     override fun render(delta: Float) {
-        clearScreen(red = 0.1f, green = 0.12f, blue = 0.15f, alpha = 1f)
+        val backgroundColor = Scene2DSkin.defaultSkin.getColor("primary")
+        clearScreen(backgroundColor.r, backgroundColor.g, backgroundColor.b, 1f)
 
         val assetsFinished = assets.update()
         val progress = assets.progress

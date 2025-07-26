@@ -12,18 +12,13 @@ operator fun AssetManager.get(asset: SkinAssets): Skin = getAsset(asset.jsonPath
 
 fun AssetManager.load(asset: SkinAssets): Asset<Skin> {
 
-    // TODO: not optimal but works for now
-    load(FontAssets.Default)
-    load(FontAssets.Title)
+    FontAssets.entries.forEach { load(it) }
     finishLoading()
 
     val resourcesMap = ObjectMap<String, Any>().apply {
-        put("default", get(FontAssets.Default))
-        put("font", get(FontAssets.Default))
-        put("list", get(FontAssets.Default))
-        put("subtitle", get(FontAssets.Default))
-        put("window", get(FontAssets.Default))
-        put("title", get(FontAssets.Title))
+        FontAssets.entries.forEach {
+            put(it.skinName, get(it))
+        }
     }
 
     val skinParams = SkinLoader.SkinParameter(asset.atlasPath, resourcesMap)

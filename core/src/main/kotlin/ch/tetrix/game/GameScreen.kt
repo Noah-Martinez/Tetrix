@@ -12,10 +12,12 @@ import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.scenes.scene2d.Stage
 import com.badlogic.gdx.utils.viewport.FitViewport
 import ktx.app.KtxScreen
+import ktx.app.clearScreen
 import ktx.inject.Context
 import ktx.inject.register
 import ktx.math.vec2
 import ktx.math.vec3
+import ktx.scene2d.Scene2DSkin
 import net.mgsx.gltf.scene3d.lights.DirectionalLightEx
 
 /**
@@ -88,8 +90,8 @@ class GameScreen(val context: Context) : KtxScreen {
     }
 
     override fun render(delta: Float) {
-        Gdx.gl.glClearColor(0f, 0f, 0f, 1f)
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT or GL20.GL_DEPTH_BUFFER_BIT)
+        val backgroundColor = Scene2DSkin.defaultSkin.getColor("primary")
+        clearScreen(backgroundColor.r, backgroundColor.g, backgroundColor.b, 1f)
 
         Gdx.gl.glEnable(GL20.GL_DEPTH_TEST)
         Gdx.gl.glDepthFunc(GL20.GL_LESS)
@@ -104,7 +106,7 @@ class GameScreen(val context: Context) : KtxScreen {
 
 
     override fun resize(width: Int, height: Int) {
-        stage.viewport.update(width, height)
+        stage.viewport.update(width, height, true)
     }
 
     override fun dispose() {

@@ -27,7 +27,8 @@ class MainMenuScreen(private val context: Context) : KtxScreen {
     }
 
     override fun render(delta: Float) {
-        clearScreen(red = 0.1f, green = 0.12f, blue = 0.15f, alpha = 1f)
+        val backgroundColor = Scene2DSkin.defaultSkin.getColor("primary")
+        clearScreen(backgroundColor.r, backgroundColor.g, backgroundColor.b, 1f)
 
         stage.viewport.apply()
         stage.act(delta)
