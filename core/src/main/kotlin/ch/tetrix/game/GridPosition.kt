@@ -1,4 +1,4 @@
-package ch.tetrix.game.actors
+package ch.tetrix.game
 
 data class GridPosition(var x: Int, var y: Int) {
     operator fun plus(pos: GridPosition) = copy(x + pos.x, y + pos.y)

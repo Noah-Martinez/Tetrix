@@ -1,16 +1,25 @@
 package ch.tetrix.mainmenu
 
+import ch.tetrix.Game
+import ch.tetrix.game.GameScreen
 import ch.tetrix.mainmenu.components.createHighScoreComponent
 import ch.tetrix.mainmenu.components.createMenuComponent
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
+import ktx.inject.Context
 import ktx.log.Logger
 import ktx.scene2d.KTableWidget
 
-fun createMainMenuLayout(skin: Skin, log: Logger) : KTableWidget {
+fun createMainMenuLayout(skin: Skin, log: Logger, context: Context) : KTableWidget {
+    val game: Game = context.inject()
+
     val mainMenuComponent = createMenuComponent(
         skin,
-        onStart = { log.info { "Start Game" } },
+        onStart = {
+            game.removeScreen<MainMenuScreen>()
+            game.addScreen(GameScreen(context))
+            game.setScreen<GameScreen>()
+        },
         onOptions = { log.info { "Options" } },
         onScores = { log.info { "Scores" } },
         onCredits = { log.info { "Credits" } },

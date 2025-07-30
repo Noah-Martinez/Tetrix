@@ -1,4 +1,4 @@
-package ch.tetrix.game.actors
+package ch.tetrix.game
 
 enum class Directions(val dx: Int, val dy: Int) {
     LEFT(-1, 0),

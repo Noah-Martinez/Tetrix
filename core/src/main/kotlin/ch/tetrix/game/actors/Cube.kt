@@ -1,12 +1,15 @@
 package ch.tetrix.game.actors
 
-import ch.tetrix.game.ui.GameField
+import ch.tetrix.game.Directions
+import ch.tetrix.game.GridPosition
+import ch.tetrix.game.components.GameComponent
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.graphics.g3d.Environment
 import com.badlogic.gdx.graphics.g3d.ModelBatch
 import com.badlogic.gdx.graphics.g3d.ModelInstance
 import com.badlogic.gdx.scenes.scene2d.Actor
+import com.badlogic.gdx.scenes.scene2d.Stage
 import ktx.inject.Context
 import ktx.math.vec3
 import net.mgsx.gltf.loaders.glb.GLBLoader
@@ -20,10 +23,10 @@ class Cube(
     private val modelBatch: ModelBatch = context.inject()
     private val environment: Environment = context.inject()
 
-    val shape
-        get() = parent as CubeShape? ?: error("Cube must be added to a Shape before using shape")
-    val grid
-        get() = parent.parent as GameField? ?: error("Cube must be added to a Stage before using grid")
+    private lateinit var grid: GameComponent
+
+    val shape by lazy { parent as CubeShape }
+
     val gridPos: GridPosition
         get() = shape.gridPos + localPos
 
@@ -35,6 +38,16 @@ class Cube(
     private val modelAsset = Gdx.files.internal("model/cube.glb")
     private val model = GLBLoader().load(modelAsset)
     private val modelInstance = ModelInstance(model.scene.model)
+
+    override fun setStage(stage: Stage?) {
+        super.setStage(stage)
+
+        if (stage !is GameComponent) {
+            return
+        }
+
+        grid = stage
+    }
 
     /** makes sure the model is correctly positioned and sized for the grid's cell it belongs to */
     override fun act(delta: Float) {
@@ -101,7 +114,6 @@ class Cube(
     }
 
     fun dispose() {
-        model.scene.model.dispose()
-        modelBatch.dispose()
+        model.dispose()
     }
 }
