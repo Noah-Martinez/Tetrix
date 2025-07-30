@@ -22,7 +22,7 @@ import ktx.scene2d.Scene2DSkin
 class Game : KtxGame<KtxScreen>() {
     private val batch: Batch by lazy { SpriteBatch() }
 
-    private val context = Context()
+    val context = Context()
     private val assets = AssetManager()
 
     companion object {
@@ -63,6 +63,12 @@ class Game : KtxGame<KtxScreen>() {
             Gdx.input.inputProcessor = inputMultiplexer
             bindSingleton<InputMultiplexer>(inputMultiplexer)
         }
+    }
+
+    override fun <Type : KtxScreen> removeScreen(type: Class<Type>): Type? {
+        val screen = super.removeScreen(type)
+        screen?.dispose()
+        return screen
     }
 
     override fun dispose() {

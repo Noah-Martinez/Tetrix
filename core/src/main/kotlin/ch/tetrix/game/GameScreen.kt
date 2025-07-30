@@ -1,123 +1,89 @@
 package ch.tetrix.game
 
-import ch.tetrix.game.ui.GameField
+import ch.tetrix.Game
+import ch.tetrix.game.components.GameComponent
+import ch.tetrix.game.services.GameService
+import ch.tetrix.mainmenu.MainMenuScreen
+import ch.tetrix.shared.TxScreen
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.InputMultiplexer
-import com.badlogic.gdx.graphics.GL20
-import com.badlogic.gdx.graphics.g3d.Environment
-import com.badlogic.gdx.graphics.g3d.ModelBatch
-import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute
-import com.badlogic.gdx.math.MathUtils
-import com.badlogic.gdx.math.Vector2
+import com.badlogic.gdx.graphics.Texture
+import com.badlogic.gdx.graphics.g2d.NinePatch
 import com.badlogic.gdx.scenes.scene2d.Stage
+import com.badlogic.gdx.scenes.scene2d.ui.Skin
+import com.badlogic.gdx.scenes.scene2d.utils.Drawable
+import com.badlogic.gdx.scenes.scene2d.utils.NinePatchDrawable
 import com.badlogic.gdx.utils.viewport.FitViewport
-import ktx.app.KtxScreen
-import ktx.app.clearScreen
 import ktx.inject.Context
 import ktx.inject.register
-import ktx.math.vec2
-import ktx.math.vec3
-import ktx.scene2d.Scene2DSkin
-import net.mgsx.gltf.scene3d.lights.DirectionalLightEx
+
+val GAME_VIEWPORT_WIDTH = Gdx.graphics.width.toFloat()
+val GAME_VIEWPORT_HEIGHT = Gdx.graphics.height.toFloat()
+
+data class ComponentBackground(val drawable: Drawable)
+data class ValueBackground(val drawable: Drawable)
 
 /**
  * Main game screen that coordinates the different components of the game.
  */
-class GameScreen(val context: Context) : KtxScreen {
-    private lateinit var modelBatch: ModelBatch
-    private lateinit var stage: Stage
-    private lateinit var inputMultiplexer: InputMultiplexer
-    private lateinit var gameField: GameField
+class GameScreen(val context: Context) : TxScreen() {
+    override val stage: Stage by lazy {
+        // has to be fit viewport otherwise game field cells won't be 1:1 ratio
+        val viewport = FitViewport(GAME_VIEWPORT_WIDTH, GAME_VIEWPORT_HEIGHT)
+        Stage(viewport)
+    }
+    private val game: Game by lazy { context.inject() }
+    private val inputMultiplexer: InputMultiplexer by lazy { context.inject() }
+    private val gameService: GameService by lazy { GameService() }
 
-    /** changes the rotation angles for the camera, viewport and cube positions are adjusted to fit the gird */
-    private val cameraRotationDeg = vec2(-0.5f, 0.2f)
-
-    /** Rotation of the stage directional light. Will be normalized so keep between 1 and -1. */
-    private val lightRotationNor = vec3(-1f, -1f, 0f)
-
-    private val nCols: Int = 17
-    private val nRows: Int = 36
-
-    override fun show() {
-        super.show()
-        inputMultiplexer = context.inject()
-
-        stage = Stage(FitViewport(nCols.toFloat(), nRows.toFloat()))
-        inputMultiplexer.addProcessor(stage)
-        modelBatch = ModelBatch()
-
-        context.register {
-            bindSingleton<ModelBatch>(modelBatch)
-
-            val stageEnvironment = Environment().apply {
-                add(DirectionalLightEx().apply {
-//                    isDebugAll = true
-                    color.set(0.3f, 0.3f, 0.3f, 0.1f)
-                    direction.set(lightRotationNor).nor()
-                })
-                set(ColorAttribute.createAmbientLight(0.8f, 0.8f, 0.8f, 0.3f))
-            }
-            bindSingleton<Environment>(stageEnvironment)
-        }
-        rotateAndFitCamera(cameraRotationDeg)
-
-        gameField = GameField(nCols, nRows, cameraRotationDeg, context)
-        stage.addActor(gameField)
-
-        stage.act()
-        stage.draw()
+    private val componentBackground by lazy {
+        val patch: NinePatch = skin.getPatch("table-background-round")
+        patch.texture.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest)
+        NinePatchDrawable(patch)
+    }
+    private val valueBackground by lazy {
+        val patch: NinePatch = skin.getPatch("game-value-bg")
+        patch.texture.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest)
+        NinePatchDrawable(patch)
     }
 
-    private fun rotateAndFitCamera(anglesDeg: Vector2) {
-        stage.camera.apply {
-            /*
-             * NOTE: moved near-pane to negative space since Stage is on z:0 and can't be moved,
-             * but when the camera is angled some items may end up in <0 and clipped otherwise.
-             * That's why OrthographicCamera is usually only rotated around the z axis.
-             */
-            near = -100f
+    private val gameComponent by lazy { GameComponent(context) }
+    private val gameLayout by lazy { GameViewBuilder.layout(context, gameComponent) }
 
-            if (anglesDeg.x != 0f) rotate(anglesDeg.x, 1f, 0f, 0f)
-            if (anglesDeg.y != 0f) rotate(anglesDeg.y, 0f, 1f, 0f)
-
-            val radX = anglesDeg.x * MathUtils.degreesToRadians
-            val radY = anglesDeg.y * MathUtils.degreesToRadians
-            if (anglesDeg.x != 0f) viewportHeight = nRows / MathUtils.cos(radX)
-            if (anglesDeg.y != 0f) viewportWidth = nCols / MathUtils.cos(radY)
-
-            update()
+    override fun show() {
+        context.register {
+            bindSingleton<Skin>(skin)
+            bindSingleton(gameService)
+            bindSingleton(ComponentBackground(componentBackground))
+            bindSingleton(ValueBackground(valueBackground))
         }
+
+        stage.addActor(gameLayout)
+
+        inputMultiplexer.addProcessor(stage)
+    }
+
+    private fun exit() {
+        game.removeScreen<GameScreen>()
+        game.addScreen(MainMenuScreen(context))
+        game.setScreen<MainMenuScreen>()
     }
 
     override fun render(delta: Float) {
-        val backgroundColor = Scene2DSkin.defaultSkin.getColor("primary")
-        clearScreen(backgroundColor.r, backgroundColor.g, backgroundColor.b, 1f)
-
-        Gdx.gl.glEnable(GL20.GL_DEPTH_TEST)
-        Gdx.gl.glDepthFunc(GL20.GL_LESS)
-        Gdx.gl.glEnable(GL20.GL_CULL_FACE)
-        Gdx.gl.glCullFace(GL20.GL_BACK)
-
-        modelBatch.begin(stage.camera)
-        stage.act(delta)
-        stage.draw()
-        modelBatch.end()
-    }
-
-
-    override fun resize(width: Int, height: Int) {
-        stage.viewport.update(width, height, true)
+        super.render(delta)
+        gameComponent.act(delta)
+        gameComponent.draw()
     }
 
     override fun dispose() {
-        if (::stage.isInitialized) {
-            stage.dispose()
+        super.dispose()
+        gameComponent.dispose()
+        context.apply {
+            remove<Skin>()
+            remove<GameService>()
+            remove<ComponentBackground>()
+            remove<ValueBackground>()
         }
-
-        if (::gameField.isInitialized) {
-            gameField.dispose()
-        }
-
         inputMultiplexer.removeProcessor(stage)
     }
 }
