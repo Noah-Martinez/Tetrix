@@ -8,20 +8,16 @@ import ch.tetrix.shared.TxScreen
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input
 import com.badlogic.gdx.InputMultiplexer
-import com.badlogic.gdx.graphics.Texture
-import com.badlogic.gdx.graphics.g2d.NinePatch
 import com.badlogic.gdx.scenes.scene2d.Stage
-import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable
-import com.badlogic.gdx.scenes.scene2d.utils.NinePatchDrawable
 import com.badlogic.gdx.utils.viewport.FitViewport
 import ktx.inject.Context
 import ktx.inject.register
 import ktx.log.logger
 import ktx.scene2d.Scene2DSkin
 
-val GAME_VIEWPORT_WIDTH = Gdx.graphics.width.toFloat()
-val GAME_VIEWPORT_HEIGHT = Gdx.graphics.height.toFloat()
+const val GAME_VIEWPORT_WIDTH = 600f
+const val GAME_VIEWPORT_HEIGHT = 500f
 
 data class ComponentBackground(val drawable: Drawable)
 data class ValueBackground(val drawable: Drawable)
@@ -42,17 +38,8 @@ class GameScreen(val context: Context) : TxScreen() {
     private val inputMultiplexer: InputMultiplexer by lazy { context.inject() }
     private val gameService: GameService by lazy { GameService() }
 
-    private val componentBackground by lazy {
-        val patch: NinePatch = skin.getPatch("table-background-round")
-        patch.texture.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest)
-        NinePatchDrawable(patch)
-    }
-
-    private val valueBackground by lazy {
-        val patch: NinePatch = skin.getPatch("game-value-bg")
-        patch.texture.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest)
-        NinePatchDrawable(patch)
-    }
+    private val componentBackground by lazy { skin.getDrawable("table-background-round") }
+    private val valueBackground by lazy { skin.getDrawable("game-value-bg") }
 
     private val gameComponent by lazy { GameComponent(context) }
     private val gameLayout by lazy { GameViewBuilder.layout(context, gameComponent) }
@@ -70,7 +57,6 @@ class GameScreen(val context: Context) : TxScreen() {
 
     override fun show() {
         context.register {
-            bindSingleton<Skin>(skin)
             bindSingleton(gameService)
             bindSingleton(ComponentBackground(componentBackground))
             bindSingleton(ValueBackground(valueBackground))
@@ -104,7 +90,6 @@ class GameScreen(val context: Context) : TxScreen() {
         super.dispose()
         gameComponent.dispose()
         context.apply {
-            remove<Skin>()
             remove<GameService>()
             remove<ComponentBackground>()
             remove<ValueBackground>()
@@ -144,5 +129,4 @@ class GameScreen(val context: Context) : TxScreen() {
         game.addScreen(MainMenuScreen(context))
         game.setScreen<MainMenuScreen>()
     }
-
 }

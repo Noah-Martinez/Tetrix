@@ -4,6 +4,8 @@ import ch.tetrix.assets.SkinAssets
 import ch.tetrix.assets.load
 import ch.tetrix.loading.LoadingScreen
 import ch.tetrix.mainmenu.MainMenuScreen
+import ch.tetrix.scoreboard.persistence.ScoreboardFactory
+import ch.tetrix.scoreboard.persistence.ScoreboardRepository
 import com.badlogic.ashley.core.PooledEngine
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.InputMultiplexer
@@ -11,6 +13,7 @@ import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
+import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import ktx.app.KtxGame
 import ktx.app.KtxScreen
 import ktx.freetype.registerFreeTypeFontLoaders
@@ -57,11 +60,18 @@ class Game : KtxGame<KtxScreen>() {
             val defaultSkin = assets.load(SkinAssets.Default)
             defaultSkin.finishLoading()
             Scene2DSkin.defaultSkin = defaultSkin.asset
+            bindSingleton<Skin>(Scene2DSkin.defaultSkin)
 
             // set input multiplexer
             val inputMultiplexer = InputMultiplexer()
             Gdx.input.inputProcessor = inputMultiplexer
             bindSingleton<InputMultiplexer>(inputMultiplexer)
+
+            bindSingleton<ScoreboardRepository>(
+                ScoreboardFactory.getScoreboard(
+                    ScoreboardFactory.StorageType.CSV
+                )
+            )
         }
     }
 

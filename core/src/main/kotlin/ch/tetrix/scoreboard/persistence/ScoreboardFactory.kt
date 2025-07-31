@@ -1,4 +1,4 @@
-package ch.tetrix.scoreboard
+package ch.tetrix.scoreboard.persistence
 
 /**
  * Factory for creating Scoreboard instances.
