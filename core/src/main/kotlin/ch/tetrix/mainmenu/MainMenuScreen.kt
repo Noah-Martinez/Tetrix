@@ -2,6 +2,7 @@ package ch.tetrix.mainmenu
 
 import ch.tetrix.Game
 import ch.tetrix.game.GameScreen
+import ch.tetrix.scoreboard.ScoreboardScreen
 import ch.tetrix.shared.TxScreen
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.InputMultiplexer
@@ -39,11 +40,6 @@ class MainMenuScreen(private val context: Context) : TxScreen() {
         stage.draw()
     }
 
-    override fun resize(width: Int, height: Int) {
-        super.resize(width, height)
-        stage.viewport.update(width, height, true)
-    }
-
     override fun dispose() {
         super.dispose()
         inputMultiplexer.removeProcessor(stage)
@@ -79,8 +75,10 @@ class MainMenuScreen(private val context: Context) : TxScreen() {
     }
 
     private fun showScoresMenu() {
-        log.info { "Opening high scores..." }
-        // TODO: Show scores screen
+        game.removeScreen<MainMenuScreen>()
+        game.addScreen(ScoreboardScreen(context))
+        game.setScreen<ScoreboardScreen>()
+        log.info { "Opening scores..." }
     }
 
     private fun showCreditsMenu() {
