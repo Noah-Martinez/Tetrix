@@ -34,6 +34,7 @@ class LoadingScreen(private val context: Context) : TxScreen() {
     }
 
     override fun render(delta: Float) {
+        super.render(delta)
         val assetsFinished = assets.update()
         val progress = assets.progress
 
@@ -42,12 +43,13 @@ class LoadingScreen(private val context: Context) : TxScreen() {
         camera.update()
         batch.projectionMatrix = camera.combined
 
-        super.render(delta)
-
         if (assetsFinished && !loadingComplete) {
             loadingComplete = true
             loadingUI.setLoadingComplete()
         }
+
+        stage.act(delta)
+        stage.draw()
     }
 
     private fun navigateToMainMenu() {

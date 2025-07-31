@@ -5,7 +5,6 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import ktx.app.KtxScreen
 import ktx.app.clearScreen
 import ktx.scene2d.Scene2DSkin
-import ktx.scene2d.StageWidget
 
 /**
  * Terix implementation of KtxScreen
@@ -20,25 +19,24 @@ import ktx.scene2d.StageWidget
 abstract class TxScreen: KtxScreen {
     protected val skin: Skin by lazy { Scene2DSkin.defaultSkin }
     protected abstract val stage: Stage
-    protected open val stageWidget: StageWidget by lazy { StageWidget(stage) }
 
     /** resizes the viewport */
     override fun resize(width: Int, height: Int) {
+        super.resize(width, height)
         stage.viewport.update(width, height, true)
     }
 
     /** clears screen & updates and renders the stage */
     override fun render(delta: Float) {
+        super.render(delta)
         val backgroundColor = skin.getColor("primary")
         clearScreen(backgroundColor.r, backgroundColor.g, backgroundColor.b, 1f)
-
         stage.viewport.apply()
-        stage.act(delta)
-        stage.draw()
     }
 
     /** disposes the screen and the stage */
     override fun dispose() {
+        super.dispose()
         stage.dispose()
     }
 }
