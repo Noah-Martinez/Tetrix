@@ -1,6 +1,7 @@
-package ch.tetrix.game
+package ch.tetrix.game.components
 
-import ch.tetrix.scoreboard.persistence.ScoreDto
+import ch.tetrix.game.actions.GameOverAction
+import ch.tetrix.scoreboard.models.ScoreDto
 import com.badlogic.gdx.scenes.scene2d.Stage
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import com.badlogic.gdx.utils.Align
@@ -12,7 +13,6 @@ import ktx.scene2d.textButton
 import ktx.scene2d.textField
 
 object GameOverViewBuilder {
-
     fun layout(
         skin: Skin,
         scores: List<ScoreDto>,

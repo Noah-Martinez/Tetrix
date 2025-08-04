@@ -2,7 +2,7 @@ package ch.tetrix.game.actors
 
 import ch.tetrix.game.Directions
 import ch.tetrix.game.GridPosition
-import ch.tetrix.game.components.GameComponent
+import ch.tetrix.game.stages.GameStage
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.scenes.scene2d.Group
 import com.badlogic.gdx.scenes.scene2d.Stage
@@ -27,7 +27,7 @@ class CubeShape(
     val gridPos: GridPosition
         get() = _gridPos
 
-    private lateinit var grid: GameComponent
+    private lateinit var grid: GameStage
 
     init {
         isTransform = true
@@ -37,7 +37,7 @@ class CubeShape(
     override fun setStage(stage: Stage?) {
         super.setStage(stage)
 
-        if (stage !is GameComponent) {
+        if (stage !is GameStage) {
             return
         }
 

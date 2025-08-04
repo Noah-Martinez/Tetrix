@@ -1,7 +1,8 @@
-package ch.tetrix.scoreboard
+package ch.tetrix.scoreboard.screens
 
 import ch.tetrix.Game
-import ch.tetrix.mainmenu.MainMenuScreen
+import ch.tetrix.mainmenu.screens.MainMenuScreen
+import ch.tetrix.scoreboard.components.ScoreboardViewBuilder
 import ch.tetrix.shared.TxScreen
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.InputMultiplexer

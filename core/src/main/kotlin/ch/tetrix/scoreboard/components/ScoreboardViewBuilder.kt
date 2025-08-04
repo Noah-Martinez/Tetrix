@@ -1,12 +1,16 @@
-package ch.tetrix.scoreboard
+package ch.tetrix.scoreboard.components
 
-import ch.tetrix.scoreboard.persistence.ScoreboardRepository
+import ch.tetrix.scoreboard.repositories.ScoreboardRepository
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import com.badlogic.gdx.scenes.scene2d.ui.Value
 import com.badlogic.gdx.utils.Align
 import ktx.actors.onClick
 import ktx.inject.Context
-import ktx.scene2d.*
+import ktx.scene2d.KTableWidget
+import ktx.scene2d.label
+import ktx.scene2d.scrollPane
+import ktx.scene2d.table
+import ktx.scene2d.textButton
 
 object ScoreboardViewBuilder {
     fun layout(context: Context, onBack: () -> Unit): KTableWidget {

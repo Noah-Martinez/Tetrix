@@ -1,11 +1,13 @@
-package ch.tetrix.scoreboard.persistence
+package ch.tetrix.scoreboard.services
+
+import ch.tetrix.scoreboard.repositories.ScoreboardRepository
 
 /**
  * Factory for creating Scoreboard instances.
  * This factory allows the application to use different Scoreboard implementations
  * without being tightly coupled to a specific implementation.
  */
-object ScoreboardFactory {
+object ScoreboardService {
     /**
      * The type of storage to use for the scoreboard.
      */
@@ -31,8 +33,8 @@ object ScoreboardFactory {
 
         // Otherwise, create a new instance based on the specified type
         val scoreboard = when (type) {
-            StorageType.CSV -> ScoreboardCsv
-            StorageType.DATABASE -> ScoreboardDatabase
+            StorageType.CSV -> ScoreboardCsvService
+            StorageType.DATABASE -> ScoreboardDatabaseService
         }
 
         // Initialize the scoreboard

@@ -1,5 +1,8 @@
-package ch.tetrix.scoreboard.persistence
+package ch.tetrix.scoreboard.services
 
+import ch.tetrix.scoreboard.models.ScoreDto
+import ch.tetrix.scoreboard.models.ScoreEntity
+import ch.tetrix.scoreboard.repositories.ScoreboardRepository
 import ch.tetrix.shared.ScoreboardInitException
 import ch.tetrix.shared.ScoreboardLoadException
 import ch.tetrix.shared.ScoreboardSaveException
@@ -11,14 +14,14 @@ import java.sql.SQLException
 import java.sql.Statement
 import ktx.log.logger
 
-object ScoreboardDatabase : ScoreboardRepository {
+object ScoreboardDatabaseService : ScoreboardRepository {
     private const val DB_FILE_NAME = "scoreboard.db"
     private val PROJECT_ROOT: Path = Paths.get(System.getProperty("user.dir"))
     private val DB_PATH: Path = PROJECT_ROOT.resolve(DB_FILE_NAME)
     private val JDBC_URL = "jdbc:sqlite:${DB_PATH.toAbsolutePath()}"
 
     private lateinit var conn: Connection
-    private var log = logger<ScoreboardDatabase>()
+    private var log = logger<ScoreboardDatabaseService>()
 
     override fun init(location: String) {
         // only run idempotent statements, since the function is run everytime before connecting to the db

@@ -1,7 +1,7 @@
 package ch.tetrix.loading
 
 import ch.tetrix.Game
-import ch.tetrix.mainmenu.MainMenuScreen
+import ch.tetrix.mainmenu.screens.MainMenuScreen
 import ch.tetrix.shared.TxScreen
 import com.badlogic.gdx.InputMultiplexer
 import com.badlogic.gdx.assets.AssetManager

@@ -1,5 +1,6 @@
-package ch.tetrix.mainmenu
+package ch.tetrix.mainmenu.components
 
+import ch.tetrix.mainmenu.actions.MainMenuAction
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import ktx.actors.onClick
 import ktx.scene2d.KTableWidget

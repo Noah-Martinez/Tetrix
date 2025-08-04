@@ -1,7 +1,9 @@
-package ch.tetrix.game
+package ch.tetrix.game.components
 
-import ch.tetrix.game.components.GameComponent
+import ch.tetrix.game.screens.ComponentBackground
+import ch.tetrix.game.screens.ValueBackground
 import ch.tetrix.game.services.GameService
+import ch.tetrix.game.stages.GameStage
 import ch.tetrix.shared.BehaviorSignal
 import com.badlogic.gdx.scenes.scene2d.ui.Label
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
@@ -12,8 +14,8 @@ import ktx.scene2d.label
 import ktx.scene2d.table
 
 object GameViewBuilder {
-    fun layout(context: Context, gameComponent: GameComponent): KTableWidget {
-        val gameTable = gameComponent.actors[0] as KTableWidget
+    fun layout(context: Context, gameStage: GameStage): KTableWidget {
+        val gameTable = gameStage.actors[0] as KTableWidget
 
         val highScoreComponent = highScoreComponent(context)
         val gameValuesComponent = gameValuesComponent(context)

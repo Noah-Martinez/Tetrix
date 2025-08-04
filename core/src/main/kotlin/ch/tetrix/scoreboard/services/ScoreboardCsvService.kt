@@ -1,5 +1,8 @@
-package ch.tetrix.scoreboard.persistence
+package ch.tetrix.scoreboard.services
 
+import ch.tetrix.scoreboard.models.ScoreDto
+import ch.tetrix.scoreboard.models.ScoreEntity
+import ch.tetrix.scoreboard.repositories.ScoreboardRepository
 import ch.tetrix.shared.ScoreboardInitException
 import ch.tetrix.shared.ScoreboardLoadException
 import ch.tetrix.shared.ScoreboardSaveException
@@ -9,7 +12,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 
-object ScoreboardCsv: ScoreboardRepository {
+object ScoreboardCsvService: ScoreboardRepository {
     private const val DEFAULT_CSV = "scoreboard.csv"
     private val PROJECT_ROOT: Path = Paths.get(System.getProperty("user.dir"))
     private const val HEADER = "id,username,score"

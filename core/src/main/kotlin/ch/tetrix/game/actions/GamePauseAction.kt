@@ -1,4 +1,4 @@
-package ch.tetrix.game
+package ch.tetrix.game.actions
 
 sealed class GamePauseAction {
     object Continue : GamePauseAction()
