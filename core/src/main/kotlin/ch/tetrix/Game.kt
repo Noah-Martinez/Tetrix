@@ -3,9 +3,9 @@ package ch.tetrix
 import ch.tetrix.assets.SkinAssets
 import ch.tetrix.assets.load
 import ch.tetrix.loading.LoadingScreen
-import ch.tetrix.mainmenu.MainMenuScreen
-import ch.tetrix.scoreboard.persistence.ScoreboardFactory
-import ch.tetrix.scoreboard.persistence.ScoreboardRepository
+import ch.tetrix.mainmenu.screens.MainMenuScreen
+import ch.tetrix.scoreboard.repositories.ScoreboardRepository
+import ch.tetrix.scoreboard.services.ScoreboardService
 import com.badlogic.ashley.core.PooledEngine
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.InputMultiplexer
@@ -68,8 +68,8 @@ class Game : KtxGame<KtxScreen>() {
             bindSingleton<InputMultiplexer>(inputMultiplexer)
 
             bindSingleton<ScoreboardRepository>(
-                ScoreboardFactory.getScoreboard(
-                    ScoreboardFactory.StorageType.DATABASE
+                ScoreboardService.getScoreboard(
+                    ScoreboardService.StorageType.DATABASE
                 )
             )
         }

@@ -1,8 +1,12 @@
-package ch.tetrix.game.components
+package ch.tetrix.game.stages
 
-import ch.tetrix.game.*
+import ch.tetrix.game.Directions
+import ch.tetrix.game.GridPosition
 import ch.tetrix.game.actors.Cube
 import ch.tetrix.game.actors.CubeShape
+import ch.tetrix.game.screens.ComponentBackground
+import ch.tetrix.game.screens.GAME_VIEWPORT_HEIGHT
+import ch.tetrix.game.screens.GAME_VIEWPORT_WIDTH
 import ch.tetrix.shared.KeyHoldConfig
 import ch.tetrix.shared.KeyHoldSystem
 import com.badlogic.gdx.Gdx
@@ -17,6 +21,7 @@ import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.scenes.scene2d.Stage
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import com.badlogic.gdx.utils.viewport.FitViewport
+import kotlin.math.max
 import ktx.inject.Context
 import ktx.inject.register
 import ktx.math.plus
@@ -24,10 +29,9 @@ import ktx.math.vec2
 import ktx.math.vec3
 import ktx.scene2d.KTableWidget
 import net.mgsx.gltf.scene3d.lights.DirectionalLightEx
-import kotlin.math.max
 
 /** visual table, also used to get the size for cubes */
-class GameComponent(
+class GameStage(
     val context: Context,
 ): Stage(FitViewport(GAME_VIEWPORT_WIDTH, GAME_VIEWPORT_HEIGHT)) {
     private val skin = context.inject<Skin>()
@@ -47,21 +51,22 @@ class GameComponent(
 
     private val stageEnvironment = Environment().apply {
         add(DirectionalLightEx().apply {
-//                    isDebugAll = true
             color.set(0.3f, 0.3f, 0.3f, 0.1f)
             direction.set(lightRotationNor).nor()
         })
         set(ColorAttribute.createAmbientLight(0.8f, 0.8f, 0.8f, 0.3f))
     }
 
-    private val keyHoldSystem = KeyHoldSystem(mapOf(
-        Pair(Input.Keys.E, KeyHoldConfig(0.2f) { activeShape?.rotateClockwise() }),
-        Pair(Input.Keys.Q, KeyHoldConfig(0.2f) { activeShape?.rotateCounterClockwise() }),
-        Pair(Input.Keys.W, KeyHoldConfig(0.2f) { activeShape?.move(Directions.UP) }),
-        Pair(Input.Keys.S, KeyHoldConfig(0.2f) { activeShape?.move(Directions.DOWN) }),
-        Pair(Input.Keys.A, KeyHoldConfig(0.2f) { activeShape?.move(Directions.LEFT) }),
-        Pair(Input.Keys.D, KeyHoldConfig(0.2f) { activeShape?.move(Directions.RIGHT) }),
-    ))
+    private val keyHoldSystem = KeyHoldSystem(
+        mapOf(
+            Pair(Input.Keys.E, KeyHoldConfig(0.2f) { activeShape?.rotateClockwise() }),
+            Pair(Input.Keys.Q, KeyHoldConfig(0.2f) { activeShape?.rotateCounterClockwise() }),
+            Pair(Input.Keys.W, KeyHoldConfig(0.2f) { activeShape?.move(Directions.UP) }),
+            Pair(Input.Keys.S, KeyHoldConfig(0.2f) { activeShape?.move(Directions.DOWN) }),
+            Pair(Input.Keys.A, KeyHoldConfig(0.2f) { activeShape?.move(Directions.LEFT) }),
+            Pair(Input.Keys.D, KeyHoldConfig(0.2f) { activeShape?.move(Directions.RIGHT) }),
+        )
+    )
     var tableSizeSet = false
 
     val table = KTableWidget(skin).apply {
@@ -95,8 +100,8 @@ class GameComponent(
 
     init {
         context.register {
-            bindSingleton<ModelBatch>(modelBatch)
-            bindSingleton<Environment>(stageEnvironment)
+            context.bindSingleton<ModelBatch>(modelBatch)
+            context.bindSingleton<Environment>(stageEnvironment)
         }
 
         rotateAndFitCamera(cameraRotationDeg)
@@ -174,7 +179,7 @@ class GameComponent(
     private fun setUniformTableSize() {
         table.apply {
             val cellSize = max(
-                (width - padX - background.minWidth)  / columns,
+                (width - padX - background.minWidth) / columns,
                 (height - padY - background.minHeight) / rows,
             )
 
@@ -202,8 +207,8 @@ class GameComponent(
 
             val radX = anglesDeg.x * MathUtils.degreesToRadians
             val radY = anglesDeg.y * MathUtils.degreesToRadians
-            if (anglesDeg.x != 0f) viewportHeight = this@GameComponent.height / MathUtils.cos(radX)
-            if (anglesDeg.y != 0f) viewportWidth = this@GameComponent.width / MathUtils.cos(radY)
+            if (anglesDeg.x != 0f) viewportHeight = this@GameStage.height / MathUtils.cos(radX)
+            if (anglesDeg.y != 0f) viewportWidth = this@GameStage.width / MathUtils.cos(radY)
 
             update()
         }

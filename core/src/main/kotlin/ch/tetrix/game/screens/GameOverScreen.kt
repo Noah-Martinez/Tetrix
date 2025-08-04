@@ -1,10 +1,12 @@
-package ch.tetrix.game
+package ch.tetrix.game.screens
 
 import ch.tetrix.Game
-import ch.tetrix.game.services.GameService.score
-import ch.tetrix.mainmenu.MainMenuScreen
-import ch.tetrix.scoreboard.persistence.ScoreDto
-import ch.tetrix.scoreboard.persistence.ScoreboardRepository
+import ch.tetrix.game.actions.GameOverAction
+import ch.tetrix.game.components.GameOverViewBuilder
+import ch.tetrix.game.services.GameService
+import ch.tetrix.mainmenu.screens.MainMenuScreen
+import ch.tetrix.scoreboard.models.ScoreDto
+import ch.tetrix.scoreboard.repositories.ScoreboardRepository
 import ch.tetrix.shared.TxScreen
 import com.badlogic.gdx.InputMultiplexer
 import com.badlogic.gdx.graphics.g2d.Batch
@@ -28,7 +30,7 @@ class GameOverScreen(val context: Context) : TxScreen() {
     private val gameOverMenuLayout: KTableWidget by lazy {
         GameOverViewBuilder.layout(
             skin = Scene2DSkin.defaultSkin,
-            scoreRepository.getGameOverScores(score.value),
+            scoreRepository.getGameOverScores(GameService.score.value),
             stage =  stage,
             onGameOverAction = ::handleGameOverAction
         )

@@ -1,4 +1,4 @@
-package ch.tetrix.scoreboard.persistence
+package ch.tetrix.scoreboard.models
 
 data class ScoreDto(
     val id: Long?,

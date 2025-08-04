@@ -2,7 +2,7 @@ package ch.tetrix.game.actors
 
 import ch.tetrix.game.Directions
 import ch.tetrix.game.GridPosition
-import ch.tetrix.game.components.GameComponent
+import ch.tetrix.game.stages.GameStage
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.graphics.g3d.Environment
@@ -23,7 +23,7 @@ class Cube(
     private val modelBatch: ModelBatch = context.inject()
     private val environment: Environment = context.inject()
 
-    private lateinit var grid: GameComponent
+    private lateinit var grid: GameStage
 
     val shape by lazy { parent as CubeShape }
 
@@ -42,7 +42,7 @@ class Cube(
     override fun setStage(stage: Stage?) {
         super.setStage(stage)
 
-        if (stage !is GameComponent) {
+        if (stage !is GameStage) {
             return
         }
 

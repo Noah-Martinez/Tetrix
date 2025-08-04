@@ -1,4 +1,4 @@
-package ch.tetrix.mainmenu
+package ch.tetrix.mainmenu.actions
 
 sealed class MainMenuAction {
     object StartGame : MainMenuAction()

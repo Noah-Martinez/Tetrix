@@ -1,9 +1,12 @@
-package ch.tetrix.game
+package ch.tetrix.game.screens
 
 import ch.tetrix.Game
-import ch.tetrix.game.components.GameComponent
+import ch.tetrix.game.actions.GamePauseAction
+import ch.tetrix.game.components.GamePauseViewBuilder
+import ch.tetrix.game.components.GameViewBuilder
 import ch.tetrix.game.services.GameService
-import ch.tetrix.mainmenu.MainMenuScreen
+import ch.tetrix.game.stages.GameStage
+import ch.tetrix.mainmenu.screens.MainMenuScreen
 import ch.tetrix.shared.TxScreen
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input
@@ -41,8 +44,8 @@ class GameScreen(val context: Context) : TxScreen() {
     private val componentBackground by lazy { skin.getDrawable("table-background-round") }
     private val valueBackground by lazy { skin.getDrawable("game-value-bg") }
 
-    private val gameComponent by lazy { GameComponent(context) }
-    private val gameLayout by lazy { GameViewBuilder.layout(context, gameComponent) }
+    private val gameStage by lazy { GameStage(context) }
+    private val gameLayout by lazy { GameViewBuilder.layout(context, gameStage) }
     private val pauseOverlay by lazy {
         GamePauseViewBuilder.layout(
             skin = Scene2DSkin.defaultSkin,
@@ -84,17 +87,17 @@ class GameScreen(val context: Context) : TxScreen() {
         }
 
         if (!isPaused) {
-            gameComponent.act(delta)
+            gameStage.act(delta)
         }
         stage.act(delta)
 
-        gameComponent.draw()
+        gameStage.draw()
         stage.draw()
     }
 
     override fun dispose() {
         super.dispose()
-        gameComponent.dispose()
+        gameStage.dispose()
         context.apply {
             remove<GameService>()
             remove<ComponentBackground>()

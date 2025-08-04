@@ -1,4 +1,7 @@
-package ch.tetrix.scoreboard.persistence
+package ch.tetrix.scoreboard.repositories
+
+import ch.tetrix.scoreboard.models.ScoreDto
+import ch.tetrix.scoreboard.models.ScoreEntity
 
 interface ScoreboardRepository {
     /**
