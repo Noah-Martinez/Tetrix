@@ -59,6 +59,7 @@ object GameService {
 
     init {
         reset()
+        score.dispatch(10) //TODO REMOVE THIS ON PRODUCTION
         highScore.dispatch(123)
     }
 

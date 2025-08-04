@@ -36,7 +36,7 @@ class GameScreen(val context: Context) : TxScreen() {
 
     private val game: Game by lazy { context.inject() }
     private val inputMultiplexer: InputMultiplexer by lazy { context.inject() }
-    private val gameService: GameService by lazy { GameService() }
+    private val gameService: GameService by lazy { GameService }
 
     private val componentBackground by lazy { skin.getDrawable("table-background-round") }
     private val valueBackground by lazy { skin.getDrawable("game-value-bg") }
@@ -49,6 +49,12 @@ class GameScreen(val context: Context) : TxScreen() {
             stage = stage,
             onPauseMenuAction = ::handlePauseMenuAction
         )
+    }
+
+    init {
+        if(!game.containsScreen<GameOverScreen>()) {
+            game.addScreen(GameOverScreen(context))
+        }
     }
 
     companion object {

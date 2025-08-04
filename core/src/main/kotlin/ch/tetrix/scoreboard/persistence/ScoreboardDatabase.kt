@@ -9,25 +9,31 @@ import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.SQLException
 import java.sql.Statement
+import ktx.log.logger
 
-object ScoreboardDatabase: ScoreboardRepository {
+object ScoreboardDatabase : ScoreboardRepository {
     private const val DB_FILE_NAME = "scoreboard.db"
     private val PROJECT_ROOT: Path = Paths.get(System.getProperty("user.dir"))
     private val DB_PATH: Path = PROJECT_ROOT.resolve(DB_FILE_NAME)
     private val JDBC_URL = "jdbc:sqlite:${DB_PATH.toAbsolutePath()}"
 
     private lateinit var conn: Connection
+    private var log = logger<ScoreboardDatabase>()
 
     override fun init(location: String) {
         // only run idempotent statements, since the function is run everytime before connecting to the db
+
+        log.info { "Initializing database connection: $PROJECT_ROOT" }
+
         try {
             val databaseConnection = DriverManager.getConnection(location.takeIf { it.isNotBlank() } ?: JDBC_URL)
             val stmt: Statement = databaseConnection.createStatement()
-            stmt.execute("""
+            stmt.execute(
+                """
                 CREATE TABLE IF NOT EXISTS scores (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    username TEXT NOT NULL
-                    score INT NOT NULL INDEX
+                    username TEXT NOT NULL,
+                    score INT NOT NULL
                 )
             """.trimIndent()
             )
@@ -41,7 +47,7 @@ object ScoreboardDatabase: ScoreboardRepository {
         val sql = "INSERT INTO scores(username, score) VALUES(?, ?)"
 
         try {
-            val stmt = conn.prepareStatement(sql)
+            val stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS) // Enable generated keys
             stmt.setString(1, scoreEntity.username)
             stmt.setInt(2, scoreEntity.score)
 
@@ -52,7 +58,9 @@ object ScoreboardDatabase: ScoreboardRepository {
 
             stmt.generatedKeys.use { generatedKeys ->
                 if (generatedKeys.next()) {
-                    return scoreEntity.copy(id = generatedKeys.getLong(1))
+                    val newId = generatedKeys.getLong(1)
+                    // Optional: log.debug("New score ID generated: $newId")
+                    return scoreEntity.copy(id = newId)
                 } else {
                     throw ScoreboardSaveException("Couldn't retrieve the generated key from the db")
                 }
@@ -100,6 +108,53 @@ object ScoreboardDatabase: ScoreboardRepository {
             )
         } catch (error: SQLException) {
             throw ScoreboardLoadException("An error occurred trying to query the scoreboard db: $error")
+        }
+    }
+
+    override fun getGameOverScores(score: Int): List<ScoreDto> {
+        val sql = """
+        WITH ranked_scores AS (
+            SELECT
+                id,
+                username,
+                score,
+                ROW_NUMBER() OVER (ORDER BY score DESC) as rank
+            FROM (
+                SELECT id, username, score FROM scores
+                UNION ALL
+                SELECT NULL AS id, '' AS username, ? AS score
+            )
+        )
+        SELECT id, username, score, rank FROM ranked_scores WHERE rank = 1
+        UNION
+        SELECT id, username, score, rank FROM ranked_scores
+        WHERE rank BETWEEN
+            (SELECT rank FROM ranked_scores WHERE id IS NULL) - 2
+            AND
+            (SELECT rank FROM ranked_scores WHERE id IS NULL) + 2
+        ORDER BY rank
+        LIMIT 6
+        """.trimIndent()
+
+        try {
+            val stmt = conn.prepareStatement(sql)
+            stmt.setInt(1, score)
+
+            val result = stmt.executeQuery()
+
+            val scores = mutableListOf<ScoreDto>()
+            while (result.next()) {
+                scores += ScoreDto(
+                    // The id column can be null for the player's transient score
+                    id = result.getObject("id")?.let { (it as Number).toLong() },
+                    username = result.getString("username"),
+                    score = result.getInt("score"),
+                    rank = result.getInt("rank")
+                )
+            }
+            return scores
+        } catch (error: SQLException) {
+            throw ScoreboardLoadException("An error occurred trying to query game over scores from the db: $error")
         }
     }
 }
