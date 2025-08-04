@@ -69,7 +69,7 @@ class Game : KtxGame<KtxScreen>() {
 
             bindSingleton<ScoreboardRepository>(
                 ScoreboardFactory.getScoreboard(
-                    ScoreboardFactory.StorageType.CSV
+                    ScoreboardFactory.StorageType.DATABASE
                 )
             )
         }

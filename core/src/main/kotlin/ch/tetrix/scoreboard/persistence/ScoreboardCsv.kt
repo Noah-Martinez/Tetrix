@@ -75,4 +75,45 @@ object ScoreboardCsv: ScoreboardRepository {
     override fun getHighScore(): ScoreEntity? {
         return getAllScores().maxByOrNull { it.score }
     }
+
+    override fun getGameOverScores(score: Int): List<ScoreDto> {
+        try {
+            // 1. Read scores from CSV ONCE and add the new player's score.
+            val allScores = getAllScores().toMutableList()
+            allScores.add(ScoreEntity(score = score))
+
+            // 2. Sort the combined list ONCE and map to DTOs with ranks.
+            // This list is now the single source of truth for ranks.
+            val rankedScores = allScores
+                .sortedByDescending { it.score }
+                .mapIndexed { index, entity ->
+                    ScoreDto(
+                        id = entity.id,
+                        username = entity.username,
+                        score = entity.score,
+                        rank = index + 1 // 1-based rank
+                    )
+                }
+
+            // 3. Find the player's score in the ranked list.
+            val playerIndex = rankedScores.indexOfFirst { it.id == null }
+
+            // 4. Define a window of scores around the player.
+            val windowStart = (playerIndex - 2).coerceAtLeast(0)
+            val windowEnd = (playerIndex + 2).coerceAtMost(rankedScores.lastIndex)
+            val playerContextScores = rankedScores.subList(windowStart, windowEnd + 1)
+
+            // 5. Build the final list: always include the top score, then the player's context.
+            val topScore = rankedScores.first()
+            val resultList = mutableListOf(topScore)
+            resultList.addAll(playerContextScores)
+
+            // 6. Remove any duplicates (if the top score was in the player's context)
+            // and limit the final list to 6 items.
+            return resultList.distinctBy { it.rank }.take(6)
+
+        } catch (ex: IOException) {
+            throw ScoreboardLoadException("Error reading game over scores from CSV: $ex")
+        }
+    }
 }

@@ -36,4 +36,16 @@ interface ScoreboardRepository {
      * @throws ch.tetrix.shared.ScoreboardLoadException
      */
     fun getHighScore(): ScoreEntity?
+
+    /**
+     * Retrieves a list of game over scores, including the player's score and surrounding scores,
+     * ranked in descending order. The result includes the highest score, the player's score,
+     * and surrounding scores, up to a total of 6 entries.
+     *
+     * @param score The score achieved by the player to be included in the ranking.
+     * @return A list of ScoreDto objects representing the top score and a context of scores
+     *         around the player's score, ordered by rank.
+     * @throws ch.tetrix.shared.ScoreboardLoadException If an error occurs during query execution or database access.
+     */
+    fun getGameOverScores(score: Int): List<ScoreDto>
 }
