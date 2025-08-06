@@ -1,0 +1,64 @@
+package ch.tetrix.game.actors
+
+import ch.tetrix.game.models.GridPosition
+import ch.tetrix.game.models.Orientation
+import ch.tetrix.game.services.GameService
+import ktx.inject.Context
+
+/** Shape with only tow orientation states (Horizontal / Vertical) */
+abstract class TwoOrientationShape(
+    gridPos: GridPosition,
+    cubePositions: Array<GridPosition>,
+    context: Context,
+) : Shape(gridPos, cubePositions, context) {
+    // NOTE: only has 2 rotation states not 4 like the default shape
+    private var orientation = Orientation.Horizontal
+
+    /** must have the same length as cubePositions */
+    protected abstract val horizontalPositions: Array<GridPosition>
+    /** must have the same length as cubePositions */
+    protected abstract val verticalPositions: Array<GridPosition>
+
+    override fun rotateClockwise(): Boolean {
+        return rotate()
+    }
+
+    override fun rotateCounterClockwise(): Boolean {
+        return rotate()
+    }
+
+    private fun rotate(): Boolean {
+        when(orientation) {
+            Orientation.Vertical -> {
+                val couldRotate = doRotate(horizontalPositions)
+                if (!couldRotate) {
+                    return false
+                }
+                orientation = Orientation.Horizontal
+            }
+            Orientation.Horizontal -> {
+                val couldRotate = doRotate(verticalPositions)
+                if (!couldRotate) {
+                    return false
+                }
+                orientation = Orientation.Vertical
+            }
+        }
+        return true
+    }
+
+    private fun doRotate(endPositions: Array<GridPosition>): Boolean {
+        val canRotate = endPositions.all {
+            GameService.cubePositions[gridPos + it] == null || GameService.cubePositions[gridPos + it]?.shape == this
+        }
+        if (!canRotate) {
+            log.info { "Unable to rotate active shape!" }
+            return false
+        }
+
+        cubes.forEachIndexed { index, cube ->
+            cube.localPos = endPositions[index]
+        }
+        return true
+    }
+}

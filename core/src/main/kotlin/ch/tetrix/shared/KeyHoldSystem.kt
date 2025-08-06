@@ -7,7 +7,7 @@ data class KeyHoldConfig(
     /** Sekunden zwischen den Wiederholungen */
     val interval: Float,
     /** Aktion, die bei jedem Intervall ausgeführt wird */
-    val onHold: () -> Unit
+    val onHold: (keycode: Int) -> Unit
 )
 
 class KeyHoldSystem(private val keyConfigs: Map<Int, KeyHoldConfig>) : KtxInputAdapter {
@@ -24,7 +24,7 @@ class KeyHoldSystem(private val keyConfigs: Map<Int, KeyHoldConfig>) : KtxInputA
         if (!tasks.containsKey(keycode)) {
             val task = object : Timer.Task() {
                 override fun run() {
-                    config.onHold()
+                    config.onHold(keycode)
                 }
             }
 
