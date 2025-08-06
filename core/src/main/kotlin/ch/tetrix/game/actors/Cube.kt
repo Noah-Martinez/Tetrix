@@ -1,7 +1,9 @@
 package ch.tetrix.game.actors
 
-import ch.tetrix.game.Directions
-import ch.tetrix.game.GridPosition
+import ch.tetrix.game.models.Directions
+import ch.tetrix.game.models.GridPosition
+import ch.tetrix.game.models.MoveResult
+import ch.tetrix.game.services.GameService
 import ch.tetrix.game.stages.GameStage
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.g2d.Batch
@@ -11,6 +13,7 @@ import com.badlogic.gdx.graphics.g3d.ModelInstance
 import com.badlogic.gdx.scenes.scene2d.Actor
 import com.badlogic.gdx.scenes.scene2d.Stage
 import ktx.inject.Context
+import ktx.log.logger
 import ktx.math.vec3
 import net.mgsx.gltf.loaders.glb.GLBLoader
 
@@ -25,13 +28,15 @@ class Cube(
 
     private lateinit var grid: GameStage
 
-    val shape by lazy { parent as CubeShape }
+    val shape: Shape
+        get() = parent as Shape
 
     val gridPos: GridPosition
         get() = shape.gridPos + localPos
 
     companion object {
         const val MODEL_DEPTH: Float = 50f
+        private val log = logger<Cube>()
     }
 
     // cube model
@@ -64,14 +69,17 @@ class Cube(
      * Check funktionen müssen unabhängig von den tatsächlichen Aktionen aufrufbar sein.
      * Da ansonsten partial moves/rotates vorkommen könnten, bei denen nur ein Paar Cubes einer Shape ge moved/rotiert werden.
      */
-    fun canMove(direction: Directions): Boolean {
+    fun canMove(direction: Directions): MoveResult {
         val nextPos = gridPos + direction
         return checkCollision(nextPos)
     }
 
     fun canRotateClockwise(): Boolean {
         val nextLocalPos = localPos.rotatedClockwise()
-        return checkCollision(nextLocalPos + shape.gridPos)
+        return when (checkCollision(nextLocalPos + shape.gridPos)) {
+            is MoveResult.Collision -> false
+            is MoveResult.Success -> true
+        }
     }
 
     /** doesn't check validity/collisions of action */
@@ -81,7 +89,10 @@ class Cube(
 
     fun canRotateCounterClockwise(): Boolean {
         val nextLocalPos = localPos.rotatedCounterClockwise()
-        return checkCollision(nextLocalPos + shape.gridPos)
+        return when (checkCollision(nextLocalPos + shape.gridPos)) {
+            is MoveResult.Collision -> false
+            is MoveResult.Success -> true
+        }
     }
 
     /** doesn't check validity/collisions of action */
@@ -90,13 +101,16 @@ class Cube(
     }
 
     /** @param gridPos must be a grid position, local positions will not work */
-    private fun checkCollision(gridPos: GridPosition): Boolean {
-        if (grid.isOutOfBounds(gridPos)) {
-            return false
+    private fun checkCollision(gridPos: GridPosition): MoveResult {
+        if (GameService.isOutOfBounds(gridPos)) {
+            return MoveResult.Collision(null)
         }
 
-        val nextPosCube = grid.cubes[gridPos]
-        return !(nextPosCube != null && nextPosCube !in shape.cubes)
+        val nextPosCube = GameService.cubePositions[gridPos]
+        if (nextPosCube != null && nextPosCube !in shape.cubes) {
+            return MoveResult.Collision(nextPosCube.shape)
+        }
+        return MoveResult.Success
     }
 
     override fun draw(batch: Batch, parentAlpha: Float) {

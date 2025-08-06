@@ -1,253 +1,426 @@
 package ch.tetrix.game.services
 
+import ch.tetrix.game.actors.Cube
+import ch.tetrix.game.actors.Shape
+import ch.tetrix.game.actors.shapeImplementations.RotorShape
+import ch.tetrix.game.models.Directions
+import ch.tetrix.game.models.GridPosition
+import ch.tetrix.game.models.MoveResult
+import ch.tetrix.game.models.ShapeType
+import ch.tetrix.game.stages.GameStage
 import ch.tetrix.shared.BehaviorSignal
-import kotlin.math.pow
+import ch.tetrix.shared.GameOverException
+import com.badlogic.gdx.utils.Timer
+import ktx.inject.Context
 import ktx.log.logger
+import kotlin.math.max
 
 object GameService {
+    const val NUM_COLS: Int = 17
+    const val NUM_ROWS: Int = 36
+    private const val INITIAL_FALL_INTERVAL_MS = 1000f
+    private const val MIN_FALL_INTERVAL_MS = 100f
+    private const val SQUARES_PER_LEVEL = 10
+    private const val FAST_FALL_FACTOR = 5
+    private const val LOCK_DELAY_S = 0.5f
+    private const val MAX_LOCK_DELAY_RESETS = 7
+
     private val log = logger<GameService>()
+
+    private var context: Context? = null
+    private var gameStage: GameStage? = null
+
+    /** actively controlled shape */
+    private var activeShape: Shape? = null
+
+    private var rotor: RotorShape? = null
+
+    /** map of all cubes, to get if a position is occupied (more performant than a full array) */
+    private val _cubes = arrayListOf<Cube>()
+    /** map of positions -> cubes, to find occupied positions */
+    val cubePositions: Map<GridPosition, Cube>
+        get() = _cubes.associateBy { it.gridPos }
 
     val highScore = BehaviorSignal(0)
     val score = BehaviorSignal(0)
+    /** level and points per cube */
     val level = BehaviorSignal(0)
+    /** full squares formed around the rotor */
     val squares = BehaviorSignal(0)
-    val lines = BehaviorSignal(0)
 
     /**
-     * Represents the active status of the game.
-     *
-     * This signal indicates whether a game is currently in an active session or not.
-     * Its value is updated throughout the game's lifecycle based on events like starting, pausing, resuming, or ending a game.
-     *
      * - `true` means the game is active and playable.
      * - `false` means the game is either paused, over, or reset.
      */
     val isGameActive = BehaviorSignal(false)
-    /**
-     * Represents the paused state of the game.
-     *
-     * It is a signal that tracks whether the game is currently paused. A value of `true` indicates the game is paused,
-     * while `false` indicates the game is running. This state can be monitored and updated during gameplay, controlling
-     * the game's flow and associated functionalities.
-     *
-     * Used by multiple game control functions to pause, resume, start or end the game, and also to manage gameplay updates
-     * such as play time tracking.
-     */
     val isGamePaused = BehaviorSignal(false)
-    /**
-     * Represents the state of whether the game is over or not.
-     * It is a reactive signal that gets updated through gameplay events such as resetting,
-     * ending the game, or transitioning between game states.
-     *
-     * The initial value is set to `false`, indicating that the game has not ended.
-     * This variable is updated by dispatching new values to control the flow of the game.
-     *
-     * Usage scenarios include:
-     * - Checking if the game is over before performing certain actions like pausing or resuming.
-     * - Updating other game logic and UI elements when the game ends.
-     */
     val isGameOver = BehaviorSignal(false)
 
-    val totalPlayTime = BehaviorSignal(0L) // in milliseconds
-    val gamesPlayed = BehaviorSignal(0)
-
-    val linesRequiredForNextLevel = BehaviorSignal(10)
-    val fallSpeed = BehaviorSignal(1000L) // milliseconds between drops
-
-    private const val BASE_POINTS_PER_CUBES = 100
-    private const val LEVEL_MULTIPLIER = 1.2f
+    private var fallIntervalMs = INITIAL_FALL_INTERVAL_MS
+    private var isFastFallActive = false
+    private var gameTimer: Timer.Task? = null
+    private var lockDelay: Timer.Task? = null
+    private var lockDelayResets = 0
 
     init {
         reset()
-        score.dispatch(10) //TODO REMOVE THIS ON PRODUCTION
-        highScore.dispatch(123)
     }
 
-    /**
-     * Starts a new game
-     */
-    fun startNewGame() {
+    fun startNewGame(context: Context, gameStage: GameStage) {
         log.info { "Starting new game" }
         reset()
+        this.context = context
+        this.gameStage = gameStage
+        setRotor(RotorShape(context))
         isGameActive.dispatch(true)
         isGameOver.dispatch(false)
         isGamePaused.dispatch(false)
-        gamesPlayed.dispatch(gamesPlayed.value + 1)
+        gameStep()
     }
 
     /**
-     * Pauses the current game
+     * Resets all game values to initial state
      */
+    private fun reset() {
+        context = null
+        gameStage = null
+        rotor = null
+        activeShape = null
+        isFastFallActive = false
+        _cubes.clear()
+        gameTimer?.cancel()
+        gameTimer = null
+        lockDelay?.cancel()
+        lockDelay = null
+        lockDelayResets = 0
+        score.dispatch(0)
+        level.dispatch(0)
+        squares.dispatch(0)
+        isGameActive.dispatch(false)
+        isGamePaused.dispatch(false)
+        isGameOver.dispatch(false)
+        updateFallSpeed()
+    }
+
     fun pauseGame() {
-        if (isGameActive.value && !isGameOver.value) {
+        if (isGameActive.value) {
             log.info { "Game paused" }
             isGamePaused.dispatch(true)
+            isGameActive.dispatch(false)
         }
     }
 
-    /**
-     * Resumes the paused game
-     */
     fun resumeGame() {
-        if (isGameActive.value && !isGameOver.value) {
+        if (!isGameActive.value && !isGameOver.value) {
             log.info { "Game resumed" }
             isGamePaused.dispatch(false)
+            isGameActive.dispatch(true)
         }
     }
 
-    /**
-     * Ends the current game
-     */
     fun endGame() {
         log.info { "Game ended. Final score: ${score.value}" }
         isGameActive.dispatch(false)
         isGameOver.dispatch(true)
         isGamePaused.dispatch(false)
 
-        // Update high score if necessary
         if (score.value > highScore.value) {
             log.info { "New high score: ${score.value}" }
             highScore.dispatch(score.value)
         }
     }
 
-    /**
-     * Resets all game values to initial state
-     */
-    fun reset() {
-        score.dispatch(0)
-        level.dispatch(1)
-        squares.dispatch(0)
-        lines.dispatch(0)
-        isGameActive.dispatch(false)
-        isGamePaused.dispatch(false)
-        isGameOver.dispatch(false)
-        linesRequiredForNextLevel.dispatch(10)
-        updateFallSpeed()
+    fun disposeAllCubes() {
+        _cubes.forEach { it.dispose() }
+        _cubes.clear()
     }
 
-    /**
-     * Adds points to the current score
-     */
-    fun addScore(points: Int) {
-        val newScore = score.value + points
-        score.dispatch(newScore)
-        log.debug { "Score updated: $newScore (+$points)" }
+    fun isOutOfBounds(pos: GridPosition): Boolean {
+        return pos.x < 0 || pos.x >= NUM_COLS || pos.y < 0 || pos.y >= NUM_ROWS
     }
 
-    /**
-     * Increments the squares (pieces) counter
-     */
-    fun incrementSquares() {
-        val newSquares = squares.value + 1
-        squares.dispatch(newSquares)
-        log.debug { "Squares placed: $newSquares" }
+    fun moveActiveShape(direction: Directions): MoveResult {
+        if (!isGameActive.value || activeShape == null || activeShape?.fallDirection?.opposite() == direction) {
+            return MoveResult.Success
+        }
+
+        val moveResult =  activeShape!!.move(direction)
+        if (moveResult is MoveResult.Success) {
+            handleLockDelayReset()
+        }
+        return moveResult
     }
 
-    /**
-     * Adds cleared lines and handles level progression
-     */
-    fun addLines(linesCleared: Int) {
-        if (linesCleared <= 0) return
+    fun rotateActiveShapeClockwise() {
+        if (!isGameActive.value || activeShape == null) {
+            return
+        }
 
-        val newLines = lines.value + linesCleared
-        lines.dispatch(newLines)
-
-        // Calculate score bonus based on lines cleared simultaneously
-        val scoreBonus = calculateLineScore(linesCleared)
-        addScore(scoreBonus)
-
-        // Check for level progression
-        checkLevelProgression()
-
-        log.info { "Lines cleared: $linesCleared, Total lines: $newLines, Score bonus: $scoreBonus" }
-    }
-
-    /**
-     * Updates play time (should be called regularly during active gameplay)
-     */
-    fun updatePlayTime(deltaMs: Long) {
-        if (isGameActive.value && !isGamePaused.value) {
-            totalPlayTime.dispatch(totalPlayTime.value + deltaMs)
+        val success = activeShape!!.rotateClockwise()
+        if (success) {
+            handleLockDelayReset()
         }
     }
 
-    /**
-     * Calculates score based on lines cleared simultaneously
-     */
-    private fun calculateLineScore(linesCleared: Int): Int {
-        val baseScore = when (linesCleared) {
-            1 -> BASE_POINTS_PER_CUBES
-            2 -> BASE_POINTS_PER_CUBES * 3
-            3 -> BASE_POINTS_PER_CUBES * 5
-            4 -> BASE_POINTS_PER_CUBES * 8 // Tetris bonus
-            else -> BASE_POINTS_PER_CUBES * linesCleared
+    fun rotateActiveShapeCounterClockwise() {
+        if (!isGameActive.value || activeShape == null) {
+            return
         }
 
-        return (baseScore * LEVEL_MULTIPLIER.toDouble().pow((level.value - 1).toDouble())).toInt()
+        val success = activeShape!!.rotateCounterClockwise()
+        if (success) {
+            handleLockDelayReset()
+        }
     }
 
-    /**
-     * Checks if player has progressed to next level
-     */
-    private fun checkLevelProgression() {
-        val currentLevel = level.value
-        val totalLines = lines.value
-        val requiredLines = currentLevel * 10 // 10 lines per level
+    fun rotateRotorClockwise() {
+        if (!isGameActive.value || rotor == null) {
+            return
+        }
 
-        if (totalLines >= requiredLines) {
-            val newLevel = currentLevel + 1
-            level.dispatch(newLevel)
-            linesRequiredForNextLevel.dispatch((newLevel * 10) - totalLines)
-            updateFallSpeed()
+        rotor!!.rotateClockwise()
+    }
 
-            log.info { "Level up! New level: $newLevel" }
+    fun rotateRotorCounterClockwise() {
+        if (!isGameActive.value || rotor == null) {
+            return
+        }
+
+        rotor!!.rotateCounterClockwise()
+    }
+
+    private fun gameStep() {
+        val context = context
+        val gameComponent = gameStage
+
+        if (context == null || gameComponent == null) {
+            throw Exception("GameComponent or context is null, game can't run without them.")
+        }
+
+        if (!isGameActive.value) {
+            return
+        }
+
+        var activeShape = activeShape
+        if (activeShape == null) {
+            try {
+                setActiveShape(ShapeType.randomShape(context))
+            } catch (e: GameOverException) {
+                endGame()
+                return
+            }
+            activeShape = GameService.activeShape!!
+            log.debug { "New active shape: ${activeShape.javaClass.simpleName}" }
+        }
+
+        val moveResult = activeShape.move(activeShape.fallDirection)
+
+        if (moveResult !is MoveResult.Collision) {
+            // valid step, piece is not colliding (e.g. fell into a gap)
+            log.debug { "Shape moved down, reset lock delay." }
+            lockDelay?.cancel()
+            lockDelayResets = 0
+            scheduleNextStep()
+            return
+        }
+
+        handleCollision(moveResult, activeShape)
+        scheduleNextStep()
+    }
+
+    private fun handleCollision(moveResult: MoveResult.Collision, activeShape: Shape) {
+        val collidedWith = moveResult.collisionObject
+
+        if (collidedWith == null) {
+            handleGameBorderCollision(activeShape)
+            return
+        }
+
+        // If lock delay is already running, do nothing.
+        // Player moves will reset it.
+        if (lockDelay?.isScheduled == true) {
+            return
+        }
+
+        log.info { "Collision with ${collidedWith.javaClass.simpleName}, lock delay started." }
+        lockDelayResets = 0 // Reset for the start of a new lock sequence
+        startLockDelayTimer()
+    }
+
+    private fun handleGameBorderCollision(activeShape: Shape) {
+        if (activeShape.fallDirection == Directions.DOWN) {
+            // return to top
+            activeShape.fallDirection = Directions.UP
+            if (isFastFallActive) {
+                disableFastFall()
+            }
+        }
+        else if (activeShape.fallDirection == Directions.UP) {
+            endGame()
+        }
+    }
+
+    private fun setActiveShape(shape: Shape) {
+        activeShape?.cubes?.forEach { it -> it.dispose() }
+        activeShape = initShape(shape)
+        lockDelay?.cancel()
+        log.debug { "reset lock delay." }
+        lockDelayResets = 0
+    }
+
+    private fun setRotor(shape: RotorShape) {
+        rotor?.cubes?.forEach { it -> it.dispose() }
+        rotor = initShape(shape)
+    }
+
+    private fun <T: Shape> initShape(shape: T): T {
+        val gameComponent = gameStage
+        if (gameComponent == null) {
+            throw Exception("GameComponent is null, shape can't be added.")
+        }
+
+        for (cube in shape.cubes) {
+            val cubePos = cube.gridPos
+            if (!isOutOfBounds(cubePos)) {
+                _cubes.add(cube)
+            }
+        }
+
+        gameComponent.addActor(shape)
+        return shape
+    }
+
+    /** used to move cubes from one shape to another (usually the rotor) */
+    private fun attachActiveShapeToRotor() {
+        lockDelay?.cancel()
+        if (activeShape == null || rotor == null || gameStage == null) {
+            return
+        }
+
+        activeShape!!.transferCubesTo(rotor!!)
+        gameStage!!.actors.removeValue(activeShape, true)
+        activeShape = null
+
+        log.info { "Shape attached to rotor." }
+    }
+
+    private fun startLockDelayTimer() {
+        lockDelay?.cancel()
+        lockDelay = object : Timer.Task() {
+            override fun run() {
+                log.info { "Lock delay over, shape connected." }
+                attachActiveShapeToRotor()
+            }
+        }
+        Timer.schedule(lockDelay, LOCK_DELAY_S)
+    }
+
+    private fun handleLockDelayReset() {
+        if (lockDelay?.isScheduled != true) {
+            return // Not in a lock delay state
+        }
+
+        if (lockDelayResets < MAX_LOCK_DELAY_RESETS) {
+            lockDelayResets++
+            log.info { "Lock delay reset. Count: $lockDelayResets/$MAX_LOCK_DELAY_RESETS" }
+            lockDelay?.cancel()
+            startLockDelayTimer() // Restart the timer
         } else {
-            linesRequiredForNextLevel.dispatch(requiredLines - totalLines)
+            log.info { "Max lock delay resets reached. Forcing shape lock." }
+            lockDelay?.run()
         }
     }
 
-    /**
-     * Updates fall speed based on current level
-     */
+    private fun updateScore(addedScore: Int) {
+        score.dispatch(score.value + addedScore)
+        if (highScore.value < score.value) {
+            highScore.dispatch(score.value)
+        }
+    }
+
+    private fun updateLevel() {
+        val totalSquares = squares.value
+        val currentLevel = level.value
+        if (totalSquares % SQUARES_PER_LEVEL == 0 && currentLevel < totalSquares / SQUARES_PER_LEVEL) {
+            log.debug { "Level up! level: $currentLevel -> ${currentLevel + 1} squares: $totalSquares" }
+            level.dispatch(currentLevel + 1)
+            updateFallSpeed()
+        }
+    }
+
     private fun updateFallSpeed() {
         val currentLevel = level.value
-        val newSpeed = 50L.coerceAtLeast(1000L - (currentLevel - 1) * 50L)
-        fallSpeed.dispatch(newSpeed)
-        log.debug { "Fall speed updated to ${newSpeed}ms for level $currentLevel" }
+        fallIntervalMs = max(MIN_FALL_INTERVAL_MS, INITIAL_FALL_INTERVAL_MS - currentLevel * 50f)
+        log.debug { "Fall speed updated to ${fallIntervalMs}ms for level $currentLevel" }
+
+        scheduleNextStep()
     }
 
-    /**
-     * Gets current game statistics
-     */
+    private fun scheduleNextStep() {
+        gameTimer?.cancel()
+
+        if (activeShape == null || !isGameActive.value) {
+            return
+        }
+
+        gameTimer = object : Timer.Task() {
+            override fun run() {
+                gameStep()
+            }
+        }
+
+        val interval =
+            if (isFastFallActive) {
+                fallIntervalMs / FAST_FALL_FACTOR / 1000f
+            }
+            else {
+                fallIntervalMs / 1000f
+            }
+
+        Timer.schedule(gameTimer, max(MIN_FALL_INTERVAL_MS / 1000f, interval))
+    }
+
+    fun enableFastFall(direction: Directions): Boolean {
+        if (
+            !isGameActive.value
+            || activeShape == null
+            || isFastFallActive
+            || activeShape!!.fallDirection.opposite() == direction
+        ) {
+            return false
+        }
+
+        isFastFallActive = true
+        log.debug { "Fast fall enabled " }
+        scheduleNextStep()
+        gameStep()
+        return true
+    }
+
+    fun disableFastFall(): Boolean {
+        if (!isFastFallActive) {
+            return false
+        }
+
+        isFastFallActive = false
+        log.debug { "Fast fall disabled" }
+        scheduleNextStep()
+        return true
+    }
+
     fun getGameStats(): GameStats {
         return GameStats(
             score = score.value,
             level = level.value,
-            lines = lines.value,
             squares = squares.value,
-            playTimeMs = totalPlayTime.value,
-            gamesPlayed = gamesPlayed.value,
             highScore = highScore.value,
-            fallSpeed = fallSpeed.value
         )
     }
 
-    /**
-     * Data class for game statistics
-     */
     data class GameStats(
         val score: Int,
         val level: Int,
-        val lines: Int,
         val squares: Int,
-        val playTimeMs: Long,
-        val gamesPlayed: Int,
         val highScore: Int,
-        val fallSpeed: Long
-    ) {
-        val playTimeSeconds: Long get() = playTimeMs / 1000
-        val playTimeMinutes: Long get() = playTimeSeconds / 60
-        val averageScorePerGame: Float get() = if (gamesPlayed > 0) score.toFloat() / gamesPlayed else 0f
-    }
+    )
 }

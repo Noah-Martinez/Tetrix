@@ -59,7 +59,6 @@ object GameViewBuilder {
     }
 
     fun highScoreComponent(context: Context): KTableWidget {
-        val gameService = context.inject<GameService>()
         val tableBackground = context.inject<ComponentBackground>().drawable
         val skin = context.inject<Skin>()
 
@@ -71,12 +70,11 @@ object GameViewBuilder {
                 .fillX()
                 .expandX()
 
-            add(valuePair(context, "HIGH SCORE", gameService.highScore))
+            add(valuePair(context, "HIGH SCORE", GameService.highScore))
         }
     }
 
     fun gameValuesComponent(context: Context): KTableWidget {
-        val gameService = context.inject<GameService>()
         val tableBackground = context.inject<ComponentBackground>().drawable
         val skin = context.inject<Skin>()
 
@@ -88,9 +86,9 @@ object GameViewBuilder {
                 .fillX()
                 .expandX()
 
-            add(valuePair(context, "SCORE", gameService.score)).row()
-            add(valuePair(context, "LEVEL", gameService.level)).row()
-            add(valuePair(context, "SQUARES", gameService.squares))
+            add(valuePair(context, "SCORE", GameService.score)).row()
+            add(valuePair(context, "LEVEL", GameService.level)).row()
+            add(valuePair(context, "SQUARES", GameService.squares))
         }
     }
 

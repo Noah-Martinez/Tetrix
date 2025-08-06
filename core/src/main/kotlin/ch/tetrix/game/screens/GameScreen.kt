@@ -66,7 +66,6 @@ class GameScreen(val context: Context) : TxScreen() {
 
     override fun show() {
         context.register {
-            bindSingleton(gameService)
             bindSingleton(ComponentBackground(componentBackground))
             bindSingleton(ValueBackground(valueBackground))
         }

@@ -1,12 +1,12 @@
 package ch.tetrix.game.stages
 
-import ch.tetrix.game.Directions
-import ch.tetrix.game.GridPosition
 import ch.tetrix.game.actors.Cube
-import ch.tetrix.game.actors.CubeShape
+import ch.tetrix.game.models.Directions
+import ch.tetrix.game.models.GridPosition
 import ch.tetrix.game.screens.ComponentBackground
 import ch.tetrix.game.screens.GAME_VIEWPORT_HEIGHT
 import ch.tetrix.game.screens.GAME_VIEWPORT_WIDTH
+import ch.tetrix.game.services.GameService
 import ch.tetrix.shared.KeyHoldConfig
 import ch.tetrix.shared.KeyHoldSystem
 import com.badlogic.gdx.Gdx
@@ -21,7 +21,7 @@ import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.scenes.scene2d.Stage
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import com.badlogic.gdx.utils.viewport.FitViewport
-import kotlin.math.max
+import ktx.app.KtxInputAdapter
 import ktx.inject.Context
 import ktx.inject.register
 import ktx.math.plus
@@ -29,6 +29,7 @@ import ktx.math.vec2
 import ktx.math.vec3
 import ktx.scene2d.KTableWidget
 import net.mgsx.gltf.scene3d.lights.DirectionalLightEx
+import kotlin.math.max
 
 /** visual table, also used to get the size for cubes */
 class GameStage(
@@ -37,9 +38,6 @@ class GameStage(
     private val skin = context.inject<Skin>()
     private val inputMultiplexer = context.inject<InputMultiplexer>()
     private val componentBackground = context.inject<ComponentBackground>().drawable
-
-    private val numCols: Int = 17
-    private val numRows: Int = 36
 
     private val modelBatch = ModelBatch()
 
@@ -59,16 +57,57 @@ class GameStage(
 
     private val keyHoldSystem = KeyHoldSystem(
         mapOf(
-            Pair(Input.Keys.E, KeyHoldConfig(0.2f) { activeShape?.rotateClockwise() }),
-            Pair(Input.Keys.Q, KeyHoldConfig(0.2f) { activeShape?.rotateCounterClockwise() }),
-            Pair(Input.Keys.W, KeyHoldConfig(0.2f) { activeShape?.move(Directions.UP) }),
-            Pair(Input.Keys.S, KeyHoldConfig(0.2f) { activeShape?.move(Directions.DOWN) }),
-            Pair(Input.Keys.A, KeyHoldConfig(0.2f) { activeShape?.move(Directions.LEFT) }),
-            Pair(Input.Keys.D, KeyHoldConfig(0.2f) { activeShape?.move(Directions.RIGHT) }),
-        )
-    )
-    var tableSizeSet = false
+            Pair(Input.Keys.A, KeyHoldConfig(0.2f) { handleKeyInputs(it) }),
+            Pair(Input.Keys.D, KeyHoldConfig(0.2f) { handleKeyInputs(it) }),
+    ))
 
+    /**
+     * Eigener InputAdapter für W/S Tasten, um fastFall zu steuern
+     */
+    private val movementInputAdapter = object : KtxInputAdapter {
+        override fun keyDown(keycode: Int): Boolean {
+            if (!GameService.isGameActive.value) {
+                return false
+            }
+
+            when (keycode) {
+                Input.Keys.W -> {
+                    return GameService.enableFastFall(Directions.UP)
+                }
+                Input.Keys.S -> {
+                    return GameService.enableFastFall(Directions.DOWN)
+                }
+                Input.Keys.Q -> {
+                    GameService.rotateActiveShapeCounterClockwise()
+                    return true
+                }
+                Input.Keys.E -> {
+                    GameService.rotateActiveShapeClockwise()
+                    return true
+                }
+                Input.Keys.J -> {
+                    GameService.rotateRotorCounterClockwise()
+                    return true
+                }
+                Input.Keys.L -> {
+                    GameService.rotateRotorClockwise()
+                    return true
+                }
+            }
+            return false
+        }
+
+        override fun keyUp(keycode: Int): Boolean {
+            when (keycode) {
+                Input.Keys.W, Input.Keys.S -> {
+                    GameService.disableFastFall()
+                    return true
+                }
+            }
+            return false
+        }
+    }
+    var tableSizeSet = false
     val table = KTableWidget(skin).apply {
         setBackground(componentBackground)
 
@@ -76,27 +115,13 @@ class GameStage(
         left()
 
         defaults().uniform()
-        for (r in 0 until numRows) {
-            for (c in 0 until numCols) {
+        repeat(GameService.NUM_ROWS) {
+            repeat(GameService.NUM_COLS) {
                 add()
             }
             row()
         }
     }
-
-    /** map of all cubes, to get if a position is occupied */
-    val cubes = mutableMapOf<GridPosition, Cube>()
-
-    /** actively controlled shape */
-    private var activeShape: CubeShape? = null
-
-    private val rotor: CubeShape = CubeShape(
-        GridPosition(8, numRows - 8),
-        arrayOf(
-            GridPosition(0, 0)
-        ),
-        context,
-    )
 
     init {
         context.register {
@@ -107,55 +132,11 @@ class GameStage(
         rotateAndFitCamera(cameraRotationDeg)
 
         inputMultiplexer.addProcessor(keyHoldSystem)
+        inputMultiplexer.addProcessor(movementInputAdapter)
 
         addActor(table)
 
-        addShape(rotor)
-
-        // TODO: remove debug shapes
-        addShape(
-            CubeShape(
-                GridPosition(7, 9),
-                arrayOf(
-                    GridPosition(0, 0),
-                    GridPosition(0, 1),
-                    GridPosition(-1, 0),
-                    GridPosition(1, 0),
-                ),
-                context,
-            )
-        )
-        // TODO: see note:
-        // NOTE: shape muss wahrscheinlich abstrakt gemacht werden. Da für den würfel zum Beispiel keine rotation möglich ist
-        addShape(
-            CubeShape(
-                GridPosition(8, 12),
-                arrayOf(
-                    GridPosition(0, 0),
-                    GridPosition(1, 0),
-                    GridPosition(0, 1),
-                    GridPosition(1, 1),
-                ),
-                context,
-            )
-        )
-        addShape(
-            CubeShape(
-                GridPosition(5, 10),
-                arrayOf(
-                    GridPosition(0, 0),
-                    GridPosition(0, 1),
-                    GridPosition(-1, 0),
-                    GridPosition(1, 0),
-                ),
-                context,
-            )
-        )
-    }
-
-    override fun act(delta: Float) {
-        super.act(delta)
-        activeShape?.act(delta)
+        GameService.startNewGame(context, this)
     }
 
     override fun draw() {
@@ -176,21 +157,19 @@ class GameStage(
         Gdx.gl.glDisable(GL20.GL_DEPTH_TEST)
     }
 
-    private fun setUniformTableSize() {
-        table.apply {
-            val cellSize = max(
-                (width - padX - background.minWidth) / columns,
-                (height - padY - background.minHeight) / rows,
-            )
-
-            cells.forEach { cell -> cell.size(cellSize) }
-
-            width = columns * cellSize
-            height = rows * cellSize
+    private fun handleKeyInputs(keycode: Int) {
+        if (!GameService.isGameActive.value) {
+            return
         }
-        tableSizeSet = true
 
-        table.invalidateHierarchy()
+        when (keycode) {
+            Input.Keys.A -> {
+                GameService.moveActiveShape(Directions.LEFT)
+            }
+            Input.Keys.D -> {
+                GameService.moveActiveShape(Directions.RIGHT)
+            }
+        }
     }
 
     private fun rotateAndFitCamera(anglesDeg: Vector2) {
@@ -214,28 +193,26 @@ class GameStage(
         }
     }
 
-    fun isOutOfBounds(pos: GridPosition): Boolean {
-        return pos.x < 0 || pos.x >= numCols || pos.y < 0 || pos.y >= numRows
-    }
+    private fun setUniformTableSize() {
+        table.apply {
+            val cellSize = max(
+                (width - padX - background.minWidth) / columns,
+                (height - padY - background.minHeight) / rows,
+            )
 
-    private fun addShape(cubeShape: CubeShape) {
-        addActor(cubeShape)
-        activeShape = cubeShape
+            cells.forEach { cell -> cell.size(cellSize) }
 
-        // register cubes of shape
-        for (actor in cubeShape.children) {
-            if (actor is Cube) {
-                val pos = actor.gridPos
-                if (!isOutOfBounds(pos)) {
-                    cubes[pos] = actor
-                }
-            }
+            width = columns * cellSize
+            height = rows * cellSize
         }
+        tableSizeSet = true
+
+        table.invalidateHierarchy()
     }
 
     /** gets the coordinates of a cell in the grid from a grid position */
     fun gridToWorldPos(pos: GridPosition): Vector2 {
-        if (isOutOfBounds(pos)) {
+        if (GameService.isOutOfBounds(pos)) {
             error("position $pos out of bounds")
         }
         val cell = table.cells[(pos.y * table.columns) + pos.x]
@@ -262,8 +239,8 @@ class GameStage(
 
     /** gets the dimensions of a cell in the grid from a grid position */
     fun gridToWorldScale(pos: GridPosition): Vector2 {
-        if (isOutOfBounds(pos)) {
-            error("position out of bounds")
+        if (GameService.isOutOfBounds(pos)) {
+            error("position $pos out of bounds")
         }
         val cell = table.cells[(pos.y * table.columns) + pos.x]
         return vec2(cell.actorWidth, cell.actorHeight)
@@ -276,7 +253,7 @@ class GameStage(
             remove<Environment>()
         }
         inputMultiplexer.removeProcessor(keyHoldSystem)
-        activeShape = null
-        cubes.values.forEach { cube -> cube.dispose() }
+        inputMultiplexer.removeProcessor(movementInputAdapter)
+        GameService.disposeAllCubes()
     }
 }
