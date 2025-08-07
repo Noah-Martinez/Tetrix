@@ -11,8 +11,10 @@ import ch.tetrix.shared.TxScreen
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input
 import com.badlogic.gdx.InputMultiplexer
+import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.scenes.scene2d.Stage
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable
+import com.badlogic.gdx.utils.viewport.ExtendViewport
 import com.badlogic.gdx.utils.viewport.FitViewport
 import ktx.inject.Context
 import ktx.inject.register
@@ -29,27 +31,28 @@ data class ValueBackground(val drawable: Drawable)
  * Main game screen that coordinates the different components of the game.
  */
 class GameScreen(val context: Context) : TxScreen() {
-    private var isPaused: Boolean = false
+    private val batch = SpriteBatch()
 
     override val stage: Stage by lazy {
-        // has to be fit viewport otherwise game field cells won't be 1:1 ratio
-        val viewport = FitViewport(GAME_VIEWPORT_WIDTH, GAME_VIEWPORT_HEIGHT)
-        Stage(viewport)
+        Stage(FitViewport(GAME_VIEWPORT_WIDTH, GAME_VIEWPORT_HEIGHT), batch) // Use FitViewport here
+    }
+
+    private val pauseStage: Stage by lazy {
+        Stage(ExtendViewport(GAME_VIEWPORT_WIDTH, GAME_VIEWPORT_HEIGHT), batch) // Uses the entire screen
     }
 
     private val game: Game by lazy { context.inject() }
     private val inputMultiplexer: InputMultiplexer by lazy { context.inject() }
-    private val gameService: GameService by lazy { GameService }
 
     private val componentBackground by lazy { skin.getDrawable("table-background-round") }
     private val valueBackground by lazy { skin.getDrawable("game-value-bg") }
 
-    private val gameStage by lazy { GameStage(context) }
+    private val gameStage by lazy { GameStage(context, batch) }
     private val gameLayout by lazy { GameViewBuilder.layout(context, gameStage) }
+
     private val pauseOverlay by lazy {
         GamePauseViewBuilder.layout(
             skin = Scene2DSkin.defaultSkin,
-            stage = stage,
             onPauseMenuAction = ::handlePauseMenuAction
         )
     }
@@ -72,37 +75,57 @@ class GameScreen(val context: Context) : TxScreen() {
 
         stage.addActor(gameLayout)
         inputMultiplexer.addProcessor(stage)
+        GameService.startNewGame(context, gameStage)
     }
 
     override fun render(delta: Float) {
         super.render(delta)
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
-            if(!isPaused){
+            if(!GameService.isGamePaused.value){
                 pauseGame()
             } else {
                 resumeGame()
             }
         }
 
-        if (!isPaused) {
+        if (!GameService.isGamePaused.value) {
+            stage.act(delta)
             gameStage.act(delta)
+        } else {
+            pauseStage.act(delta)
         }
-        stage.act(delta)
 
-        gameStage.draw()
+        stage.viewport.apply()
         stage.draw()
+        gameStage.draw()
+
+        if(GameService.isGamePaused.value) {
+            pauseStage.viewport.apply()
+            pauseStage.draw()
+        }
+    }
+
+    override fun resize(width: Int, height: Int) {
+        super.resize(width, height)
+        gameStage.viewport.update(width, height, false)
+        stage.viewport.update(width, height, false)
+        pauseStage.viewport.update(width, height, true)
     }
 
     override fun dispose() {
         super.dispose()
+        pauseStage.dispose()
         gameStage.dispose()
+        GameService.endGame()
+        GameService.disposeAllCubes()
         context.apply {
             remove<GameService>()
             remove<ComponentBackground>()
             remove<ValueBackground>()
         }
-        inputMultiplexer.removeProcessor(stage)
+        batch.dispose()
+        inputMultiplexer.clear()
     }
 
     private fun handlePauseMenuAction(action: GamePauseAction) {
@@ -114,17 +137,17 @@ class GameScreen(val context: Context) : TxScreen() {
     }
 
     private fun pauseGame() {
-        log.info { "Pause Game" }
-        isPaused = true
-        gameLayout.touchable = com.badlogic.gdx.scenes.scene2d.Touchable.disabled
-        stage.addActor(pauseOverlay)
+        GameService.pauseGame()
+
+        pauseStage.addActor(pauseOverlay)
+        inputMultiplexer.addProcessor(pauseStage)
     }
 
     private fun resumeGame() {
-        isPaused = false
+        pauseStage.clear()
+        inputMultiplexer.removeProcessor(pauseStage)
 
-        pauseOverlay.remove()
-        gameLayout.touchable = com.badlogic.gdx.scenes.scene2d.Touchable.enabled
+        GameService.resumeGame()
     }
 
     private fun showOptionsMenu() {

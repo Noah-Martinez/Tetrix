@@ -13,6 +13,7 @@ import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input
 import com.badlogic.gdx.InputMultiplexer
 import com.badlogic.gdx.graphics.GL20
+import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.graphics.g3d.Environment
 import com.badlogic.gdx.graphics.g3d.ModelBatch
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute
@@ -21,6 +22,7 @@ import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.scenes.scene2d.Stage
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import com.badlogic.gdx.utils.viewport.FitViewport
+import kotlin.math.max
 import ktx.app.KtxInputAdapter
 import ktx.inject.Context
 import ktx.inject.register
@@ -29,12 +31,12 @@ import ktx.math.vec2
 import ktx.math.vec3
 import ktx.scene2d.KTableWidget
 import net.mgsx.gltf.scene3d.lights.DirectionalLightEx
-import kotlin.math.max
 
 /** visual table, also used to get the size for cubes */
 class GameStage(
     val context: Context,
-): Stage(FitViewport(GAME_VIEWPORT_WIDTH, GAME_VIEWPORT_HEIGHT)) {
+    batch: Batch,
+): Stage(FitViewport(GAME_VIEWPORT_WIDTH, GAME_VIEWPORT_HEIGHT), batch) {
     private val skin = context.inject<Skin>()
     private val inputMultiplexer = context.inject<InputMultiplexer>()
     private val componentBackground = context.inject<ComponentBackground>().drawable
@@ -135,8 +137,6 @@ class GameStage(
         inputMultiplexer.addProcessor(movementInputAdapter)
 
         addActor(table)
-
-        GameService.startNewGame(context, this)
     }
 
     override fun draw() {

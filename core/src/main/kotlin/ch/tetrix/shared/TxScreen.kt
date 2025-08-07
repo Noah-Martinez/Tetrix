@@ -20,18 +20,11 @@ abstract class TxScreen: KtxScreen {
     protected val skin: Skin by lazy { Scene2DSkin.defaultSkin }
     protected abstract val stage: Stage
 
-    /** resizes the viewport */
-    override fun resize(width: Int, height: Int) {
-        super.resize(width, height)
-        stage.viewport.update(width, height, true)
-    }
-
     /** clears screen & updates and renders the stage */
     override fun render(delta: Float) {
         super.render(delta)
         val backgroundColor = skin.getColor("primary")
         clearScreen(backgroundColor.r, backgroundColor.g, backgroundColor.b, 1f)
-        stage.viewport.apply()
     }
 
     /** disposes the screen and the stage */

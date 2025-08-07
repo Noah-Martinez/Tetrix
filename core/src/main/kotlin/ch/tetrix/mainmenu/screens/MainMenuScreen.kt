@@ -42,6 +42,11 @@ class MainMenuScreen(private val context: Context) : TxScreen() {
         stage.draw()
     }
 
+    override fun resize(width: Int, height: Int) {
+        super.resize(width, height)
+        stage.viewport.update(width, height, true)
+    }
+
     override fun dispose() {
         super.dispose()
         inputMultiplexer.removeProcessor(stage)
