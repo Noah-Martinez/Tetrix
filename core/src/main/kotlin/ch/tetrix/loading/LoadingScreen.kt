@@ -52,6 +52,11 @@ class LoadingScreen(private val context: Context) : TxScreen() {
         stage.draw()
     }
 
+    override fun resize(width: Int, height: Int) {
+        super.resize(width, height)
+        stage.viewport.update(width, height, true)
+    }
+
     private fun navigateToMainMenu() {
         game.removeScreen<LoadingScreen>()
         game.setScreen<MainMenuScreen>()

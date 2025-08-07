@@ -11,9 +11,9 @@ import ch.tetrix.game.stages.GameStage
 import ch.tetrix.shared.BehaviorSignal
 import ch.tetrix.shared.GameOverException
 import com.badlogic.gdx.utils.Timer
+import kotlin.math.max
 import ktx.inject.Context
 import ktx.log.logger
-import kotlin.math.max
 
 object GameService {
     const val NUM_COLS: Int = 17
@@ -115,6 +115,7 @@ object GameService {
             log.info { "Game resumed" }
             isGamePaused.dispatch(false)
             isGameActive.dispatch(true)
+            scheduleNextStep()
         }
     }
 
