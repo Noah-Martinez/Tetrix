@@ -75,6 +75,10 @@ class GameScreen(val context: Context) : TxScreen() {
     override fun render(delta: Float) {
         super.render(delta)
 
+        if(GameService.isGameOver.value){
+            goToGameOverMenu()
+        }
+
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             if(!GameService.isGamePaused.value){
                 pauseGame()
@@ -152,5 +156,10 @@ class GameScreen(val context: Context) : TxScreen() {
     private fun goToMainMenu() {
         game.removeScreen<GameScreen>()
         game.setScreen<MainMenuScreen>()
+    }
+
+    private fun goToGameOverMenu() {
+        game.removeScreen<GameScreen>()
+        game.setScreen<GameOverScreen>()
     }
 }
