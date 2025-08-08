@@ -3,9 +3,9 @@ package ch.tetrix
 import ch.tetrix.assets.SkinAssets
 import ch.tetrix.assets.load
 import ch.tetrix.loading.LoadingScreen
-import ch.tetrix.mainmenu.screens.MainMenuScreen
 import ch.tetrix.scoreboard.repositories.ScoreboardRepository
 import ch.tetrix.scoreboard.services.ScoreboardService
+import ch.tetrix.shared.TxScreen
 import com.badlogic.ashley.core.PooledEngine
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.InputMultiplexer
@@ -15,14 +15,13 @@ import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import ktx.app.KtxGame
-import ktx.app.KtxScreen
 import ktx.freetype.registerFreeTypeFontLoaders
 import ktx.inject.Context
 import ktx.inject.register
 import ktx.log.logger
 import ktx.scene2d.Scene2DSkin
 
-class Game : KtxGame<KtxScreen>() {
+class Game : KtxGame<TxScreen>() {
     private val batch: Batch by lazy { SpriteBatch() }
 
     val context = Context()
@@ -39,9 +38,6 @@ class Game : KtxGame<KtxScreen>() {
         assets.registerFreeTypeFontLoaders(replaceDefaultBitmapFontLoader = true)
 
         contextRegister()
-
-        addScreen(LoadingScreen(context))
-        addScreen(MainMenuScreen(context))
 
         setScreen<LoadingScreen>()
     }
@@ -69,16 +65,34 @@ class Game : KtxGame<KtxScreen>() {
 
             bindSingleton<ScoreboardRepository>(
                 ScoreboardService.getScoreboard(
-                    ScoreboardService.StorageType.DATABASE
+                    ScoreboardService.StorageType.CSV
                 )
             )
         }
     }
 
-    override fun <Type : KtxScreen> removeScreen(type: Class<Type>): Type? {
+    override fun <Type : TxScreen> removeScreen(type: Class<Type>): Type? {
         val screen = super.removeScreen(type)
         screen?.dispose()
         return screen
+    }
+
+    /**
+     * This will add a screen if it doesn't already exist.
+     *
+     * **The screen must have only context as constructor parameters.**
+     */
+    override fun <Type : TxScreen> setScreen(type: Class<Type>) {
+        if (containsScreen(type)) {
+            super.setScreen(type)
+        } else {
+            val constructor = type.getConstructor(Context::class.java)
+            val newScreen = constructor.newInstance(context)
+            addScreen(type, newScreen)
+            log.info { "Screen ${type.simpleName} was added to Game." }
+
+            super.setScreen(type)
+        }
     }
 
     override fun dispose() {
