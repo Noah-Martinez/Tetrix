@@ -33,7 +33,7 @@ object ScoreboardCsvService: ScoreboardRepository {
         }
     }
 
-    override fun addScore(scoreEntity: ScoreEntity): ScoreEntity {
+    override fun addScore(scoreEntity: ScoreEntity): ScoreDto {
         try {
             val allScores = getAllScores()
             val nextId = (allScores.maxOfOrNull { it.id ?: 0L } ?: 0L) + 1L
@@ -48,71 +48,62 @@ object ScoreboardCsvService: ScoreboardRepository {
                 StandardOpenOption.APPEND
             )
 
-            return entityToSave
+            return getAllScores().first { it.id == entityToSave.id }
+
         } catch (ex: IOException) {
             throw ScoreboardSaveException("Fehler beim Hinzufügen des Scores zum CSV: $ex")
         }
     }
 
-    override fun getAllScores(): List<ScoreEntity> {
+    override fun getAllScores(): List<ScoreDto> {
         try {
             return Files.readAllLines(csvPath)
                 .drop(1) // skip header
                 .mapNotNull { line ->
                     val parts = line.split(',')
-                    if (parts.size != 3) {
-                        null
-                    }
+                    if (parts.size != 3) return@mapNotNull null
 
-                    ScoreEntity(
+                    ScoreDto(
                         id = parts[0].toLongOrNull(),
                         username = parts[1],
-                        score = parts[2].toIntOrNull() ?: 0
+                        score = parts[2].toIntOrNull() ?: 0,
                     )
+                }
+                .sortedByDescending { it.score }
+                .mapIndexed { index, dto ->
+                    dto.copy(rank = index + 1)
                 }
         } catch (ex: IOException) {
             throw ScoreboardLoadException("Fehler beim Lesen des Scoreboards aus dem CSV: $ex")
         }
     }
 
-    override fun getHighScore(): ScoreEntity? {
-        return getAllScores().maxByOrNull { it.score }
+    override fun getHighScore(): ScoreDto? {
+        return getAllScores().find { it.rank == 1 }?.let {
+            ScoreDto(
+                id = it.id,
+                username = it.username,
+                score = it.score,
+                rank = it.rank
+            )
+        }
     }
 
     override fun getGameOverScores(score: Int): List<ScoreDto> {
         try {
-            // 1. Read scores from CSV ONCE and add the new player's score.
             val allScores = getAllScores().toMutableList()
-            allScores.add(ScoreEntity(score = score))
+            allScores.add(ScoreDto(score = score))
 
-            // 2. Sort the combined list ONCE and map to DTOs with ranks.
-            // This list is now the single source of truth for ranks.
-            val rankedScores = allScores
-                .sortedByDescending { it.score }
-                .mapIndexed { index, entity ->
-                    ScoreDto(
-                        id = entity.id,
-                        username = entity.username,
-                        score = entity.score,
-                        rank = index + 1 // 1-based rank
-                    )
-                }
+            val playerIndex = allScores.indexOfFirst { it.id == null }
 
-            // 3. Find the player's score in the ranked list.
-            val playerIndex = rankedScores.indexOfFirst { it.id == null }
-
-            // 4. Define a window of scores around the player.
             val windowStart = (playerIndex - 2).coerceAtLeast(0)
-            val windowEnd = (playerIndex + 2).coerceAtMost(rankedScores.lastIndex)
-            val playerContextScores = rankedScores.subList(windowStart, windowEnd + 1)
+            val windowEnd = (playerIndex + 2).coerceAtMost(allScores.lastIndex)
+            val playerContextScores = allScores.subList(windowStart, windowEnd + 1)
 
-            // 5. Build the final list: always include the top score, then the player's context.
-            val topScore = rankedScores.first()
+            val topScore = allScores.first()
             val resultList = mutableListOf(topScore)
             resultList.addAll(playerContextScores)
 
-            // 6. Remove any duplicates (if the top score was in the player's context)
-            // and limit the final list to 6 items.
             return resultList.distinctBy { it.rank }.take(6)
 
         } catch (ex: IOException) {

@@ -89,6 +89,9 @@ com.badlogic.gdx.scenes.scene2d.ui.Label$LabelStyle: {
     large: {
         font: large
     }
+    medium: {
+        font: medium
+    }
     title: {
         font: title
     }

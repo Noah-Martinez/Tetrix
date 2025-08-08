@@ -7,7 +7,7 @@ import ch.tetrix.shared.TxScreen
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.InputMultiplexer
 import com.badlogic.gdx.scenes.scene2d.Stage
-import com.badlogic.gdx.utils.viewport.FitViewport
+import com.badlogic.gdx.utils.viewport.ExtendViewport
 import ktx.inject.Context
 
 class ScoreboardScreen(private val context: Context): TxScreen() {
@@ -16,7 +16,7 @@ class ScoreboardScreen(private val context: Context): TxScreen() {
 
     override val stage by lazy {
         Stage(
-            FitViewport(
+            ExtendViewport(
                 Gdx.graphics.width.toFloat(),
                 Gdx.graphics.height.toFloat()
             )

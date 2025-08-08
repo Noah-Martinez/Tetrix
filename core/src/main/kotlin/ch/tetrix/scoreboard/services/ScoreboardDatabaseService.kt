@@ -46,7 +46,7 @@ object ScoreboardDatabaseService : ScoreboardRepository {
         }
     }
 
-    override fun addScore(scoreEntity: ScoreEntity): ScoreEntity {
+    override fun addScore(scoreEntity: ScoreEntity): ScoreDto {
         val sql = "INSERT INTO scores(username, score) VALUES(?, ?)"
 
         try {
@@ -62,8 +62,12 @@ object ScoreboardDatabaseService : ScoreboardRepository {
             stmt.generatedKeys.use { generatedKeys ->
                 if (generatedKeys.next()) {
                     val newId = generatedKeys.getLong(1)
-                    // Optional: log.debug("New score ID generated: $newId")
-                    return scoreEntity.copy(id = newId)
+                    // Return a ScoreDto (id populated). Ranking is computed by getAllScores, so rank left as 0 here.
+                    return ScoreDto(
+                        id = newId,
+                        username = scoreEntity.username,
+                        score = scoreEntity.score,
+                    )
                 } else {
                     throw ScoreboardSaveException("Couldn't retrieve the generated key from the db")
                 }
@@ -73,29 +77,32 @@ object ScoreboardDatabaseService : ScoreboardRepository {
         }
     }
 
-    override fun getAllScores(): List<ScoreEntity> {
+    override fun getAllScores(): List<ScoreDto> {
         val sql = "SELECT * FROM scores ORDER BY score DESC"
 
         try {
             val stmt = conn.prepareStatement(sql)
             val result = stmt.executeQuery()
 
-            val scores = mutableListOf<ScoreEntity>()
+            val scores = mutableListOf<ScoreDto>()
             while (result.next()) {
-                scores += ScoreEntity(
-                    result.getLong("id"),
-                    result.getString("username"),
-                    result.getInt("score")
+                scores += ScoreDto(
+                    id = result.getLong("id"),
+                    username = result.getString("username"),
+                    score = result.getInt("score"),
                 )
             }
 
             return scores
+                .sortedByDescending { it.score }
+                .mapIndexed { index, dto -> dto.copy(rank = index + 1) }
+
         } catch (error: SQLException) {
             throw ScoreboardLoadException("An error occurred trying to query the scoreboard db: $error")
         }
     }
 
-    override fun getHighScore(): ScoreEntity? {
+    override fun getHighScore(): ScoreDto? {
         val sql = "SELECT * FROM scores ORDER BY score DESC LIMIT 1"
 
         try {
@@ -104,10 +111,11 @@ object ScoreboardDatabaseService : ScoreboardRepository {
 
             if (!result.next()) return null
 
-            return ScoreEntity(
-                result.getLong("id"),
-                result.getString("username"),
-                result.getInt("score")
+            return ScoreDto(
+                id = result.getLong("id"),
+                username = result.getString("username"),
+                score = result.getInt("score"),
+                rank = 1
             )
         } catch (error: SQLException) {
             throw ScoreboardLoadException("An error occurred trying to query the scoreboard db: $error")
