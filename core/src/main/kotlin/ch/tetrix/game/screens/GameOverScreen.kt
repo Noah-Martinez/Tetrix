@@ -77,9 +77,6 @@ class GameOverScreen(val context: Context) : TxScreen() {
 
     private fun goToMainMenu() {
         game.removeScreen<GameOverScreen>()
-        if(!(game.containsScreen<MainMenuScreen>())) {
-            game.addScreen(MainMenuScreen(context))
-        }
         game.setScreen<MainMenuScreen>()
     }
 }

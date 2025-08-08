@@ -7,7 +7,7 @@ import ktx.app.clearScreen
 import ktx.scene2d.Scene2DSkin
 
 /**
- * Terix implementation of KtxScreen
+ * Tetrix implementation of KtxScreen. Implementing classes must have only context as constructor parameters.
  *
  * provides basic implementations of:
  * - render()

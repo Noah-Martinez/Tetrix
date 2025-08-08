@@ -30,7 +30,6 @@ class ScoreboardScreen(private val context: Context): TxScreen() {
 
         stage.addActor(ScoreboardViewBuilder.layout(context) {
             game.removeScreen<ScoreboardScreen>()
-            game.addScreen(MainMenuScreen(context))
             game.setScreen<MainMenuScreen>()
         })
     }

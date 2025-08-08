@@ -57,12 +57,6 @@ class GameScreen(val context: Context) : TxScreen() {
         )
     }
 
-    init {
-        if(!game.containsScreen<GameOverScreen>()) {
-            game.addScreen(GameOverScreen(context))
-        }
-    }
-
     companion object {
         private val log = logger<GameScreen>()
     }
@@ -157,7 +151,6 @@ class GameScreen(val context: Context) : TxScreen() {
 
     private fun goToMainMenu() {
         game.removeScreen<GameScreen>()
-        game.addScreen(MainMenuScreen(context))
         game.setScreen<MainMenuScreen>()
     }
 }

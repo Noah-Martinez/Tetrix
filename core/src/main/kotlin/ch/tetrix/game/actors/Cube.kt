@@ -42,7 +42,7 @@ class Cube(
     // cube model
     private val modelAsset = Gdx.files.internal("model/cube.glb")
     private val model = GLBLoader().load(modelAsset)
-    private val modelInstance = ModelInstance(model.scene.model)
+    val modelInstance = ModelInstance(model.scene.model)
 
     override fun setStage(stage: Stage?) {
         super.setStage(stage)
