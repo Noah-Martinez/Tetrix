@@ -1,15 +1,17 @@
 package ch.tetrix.scoreboard.components
 
+import ch.tetrix.scoreboard.models.ScoreDto
 import ch.tetrix.scoreboard.repositories.ScoreboardRepository
+import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import com.badlogic.gdx.scenes.scene2d.ui.Value
 import com.badlogic.gdx.utils.Align
 import ktx.actors.onClick
 import ktx.inject.Context
+import ktx.scene2d.KScrollPane
 import ktx.scene2d.KTableWidget
 import ktx.scene2d.label
 import ktx.scene2d.scrollPane
-import ktx.scene2d.table
 import ktx.scene2d.textButton
 
 object ScoreboardViewBuilder {
@@ -20,12 +22,11 @@ object ScoreboardViewBuilder {
             pad(16f)
             defaults().space(16f)
 
-            add().uniform()
-            add(scoresTable(context))
-                .expand()
-                .prefWidth(Value.percentWidth(0.5f, this))
-                .minHeight(Value.percentHeight(0.5f, this@apply))
-            textButton("Main Menu") {
+            add(scoresTable(context)).colspan(3).expandX().fillX()
+            row()
+
+            textButton("MAIN MENU") {
+                it.colspan(3)
                 it.uniform()
                 onClick { onBack() }
             }
@@ -33,78 +34,80 @@ object ScoreboardViewBuilder {
     }
 
     private fun scoresTable(context: Context): KTableWidget {
-        val scoreboardService = context.inject<ScoreboardRepository>()
         val skin = context.inject<Skin>()
         val background = skin.getDrawable("table-background")
+        val scoreTable = createEmptyScoreTable(context)
 
         return KTableWidget(context.inject()).apply {
-
             pad(16f)
+
             setBackground(background)
-
-            defaults()
-                .space(16f)
-                .fill()
-                .expandX()
-
-            add(scoresRow(context, null, "NAME", "SCORE"))
-
+            defaults().align(Align.left).space(12f, 0f, 12f, 0f)
+            columnDefaults(0).prefWidth(100f)
+            columnDefaults(1).prefWidth(Value.percentWidth(.5f, scoreTable))
+            columnDefaults(2).expandX()
+            label("RANK", style = "medium")
+            label("NAME", style = "medium")
+            label("SCORE", style = "medium")
             row()
+
             scrollPane {
-                it.fill()
-                    .expand()
-                    .maxWidth(Value.percentWidth(1f, this@apply))
-                setScrollbarsVisible(true)
-                fadeScrollBars = false
-                setOverscroll(false, false)
+                setScoreTable(scoreTable)
+            }.cell(colspan = 3, expand = true, fill = true)
 
-                table {
-                    top()
-                    pad(0f, 16f, 0f, 16f)
+            loadAndPopulateScores(context, scoreTable)
+        }
+    }
 
-                    defaults()
-                        .space(16f)
-                        .fill()
-                        .expandX()
+    private fun createEmptyScoreTable(context: Context): KTableWidget {
+        return KTableWidget(context.inject()).apply {
+            defaults().align(Align.left)
+            columnDefaults(0).prefWidth(100f)
+            columnDefaults(1).prefWidth(Value.percentWidth(.5f, this))
+            columnDefaults(2).expandX()
+        }
+    }
 
-                    val scores = scoreboardService.getAllScores()
+    private fun loadAndPopulateScores(context: Context, targetTable: KTableWidget) {
+        val scoreboardService = context.inject<ScoreboardRepository>()
+        val scores = scoreboardService.getAllScores()
 
-                    scores.forEachIndexed { index, (_, name, score) ->
-                        row()
-                        add(scoresRow(context, index, name, score))
-                    }
-                }
+        Gdx.app.postRunnable {
+            targetTable.clearChildren()
+
+            targetTable.createScoreRows(scores)
+
+            targetTable.invalidateHierarchy()
+            targetTable.pack()
+
+            val parent = targetTable.parent
+            if (parent is KScrollPane) {
+                parent.invalidateHierarchy()
+                parent.layout()
+            } else if (parent is com.badlogic.gdx.scenes.scene2d.ui.ScrollPane) {
+                parent.invalidateHierarchy()
+                parent.layout()
             }
         }
     }
 
-    private fun scoresRow(context: Context, index: Int?, name: String, score: Any): KTableWidget {
-        return KTableWidget(context.inject()).apply {
-            defaults()
-                .expandX()
-                .fillX()
-                .center()
-                .space(16f)
-
-            label(index?.toString() ?: "") {
-                it.width(Value.percentWidth(0.15f, this@apply))
-                setAlignment(Align.right)
-            }
-
-            label(name) {
-                it.width(Value.percentWidth(0.35f, this@apply))
-                setAlignment(Align.center)
-            }
-
-            label("$score") {
-                it.width(Value.percentWidth(0.35f, this@apply))
-                if (index == null) {
-                    setAlignment(Align.center)
-                }
-                else {
-                    setAlignment(Align.right)
-                }
-            }
+    private fun KTableWidget.createScoreRows(
+        scores: List<ScoreDto>,
+    ) {
+        defaults().align(Align.left).space(8f, 0f, 8f, 0f)
+        scores.forEach { score ->
+            label(score.rank.toString())
+            label(score.username)
+            label(score.score.toString())
+            row()
         }
+    }
+
+    private fun KScrollPane.setScoreTable(scoreTable: KTableWidget) {
+        setScrollbarsVisible(true)
+        fadeScrollBars = false
+        setOverscroll(false, false)
+
+        addActor(scoreTable)
     }
 }

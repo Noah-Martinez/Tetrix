@@ -49,6 +49,19 @@ enum class FontAssets(
             magFilter = Texture.TextureFilter.Nearest
         }
     ),
+    Medium(
+        "medium",
+        "fonts/PressStart2P-Regular.ttf",
+        {
+            size = 16
+            mono = true
+            kerning = true
+            incremental = true
+            padTop = 4
+            minFilter = Texture.TextureFilter.Nearest
+            magFilter = Texture.TextureFilter.Nearest
+        }
+    ),
     Large(
         "large",
         "fonts/PressStart2P-Regular.ttf",

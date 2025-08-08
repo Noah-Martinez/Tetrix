@@ -21,7 +21,7 @@ interface ScoreboardRepository {
      * @return saved ScoreEntity
      * @throws ch.tetrix.shared.ScoreboardSaveException
      */
-    fun addScore(scoreEntity: ScoreEntity): ScoreEntity
+    fun addScore(scoreEntity: ScoreEntity): ScoreDto
 
     /**
      * Retrieves the list of scores from the scoreboard storage.
@@ -30,7 +30,7 @@ interface ScoreboardRepository {
      *         Returns an empty list if no scores are available.
      * @throws ch.tetrix.shared.ScoreboardLoadException
      */
-    fun getAllScores(): List<ScoreEntity>
+    fun getAllScores(): List<ScoreDto>
 
     /**
      * Retrieves the best ranking score from the scoreboard storage.
@@ -38,7 +38,7 @@ interface ScoreboardRepository {
      * @return A ScoreEntry or null if no scores are available.
      * @throws ch.tetrix.shared.ScoreboardLoadException
      */
-    fun getHighScore(): ScoreEntity?
+    fun getHighScore(): ScoreDto?
 
     /**
      * Retrieves a list of game over scores, including the player's score and surrounding scores,

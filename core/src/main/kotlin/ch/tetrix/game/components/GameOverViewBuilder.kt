@@ -60,10 +60,6 @@ object GameOverViewBuilder {
         stage: Stage,
         onGameOverAction: (GameOverAction) -> Unit
     ) {
-
-        scores.forEach { it }
-
-
         scores.forEach { score ->
             label(score.rank.toString())
             if (score.id == null) {
