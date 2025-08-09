@@ -1,11 +1,12 @@
 package ch.tetrix.game.actors.shapeImplementations
 
+import ch.tetrix.assets.TextureAssets
+import ch.tetrix.assets.get
 import ch.tetrix.game.actors.Shape
 import ch.tetrix.game.models.Directions
 import ch.tetrix.game.models.GridPosition
 import ch.tetrix.game.models.MoveResult
-import com.badlogic.gdx.graphics.Color
-import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute
+import com.badlogic.gdx.assets.AssetManager
 import ktx.inject.Context
 
 class RotorShape(
@@ -16,12 +17,8 @@ class RotorShape(
         GridPosition(0, 0),
     ),
     context,
+    texture = context.inject<AssetManager>()[TextureAssets.CUBE_RED]
 ) {
-
-    init {
-        cubes[0].modelInstance.materials.first().set(ColorAttribute.createDiffuse(Color.RED))
-    }
-
     override fun move(direction: Directions): MoveResult {
         return MoveResult.Success
     }

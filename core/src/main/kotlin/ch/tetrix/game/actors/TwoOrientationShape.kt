@@ -3,6 +3,7 @@ package ch.tetrix.game.actors
 import ch.tetrix.game.models.GridPosition
 import ch.tetrix.game.models.Orientation
 import ch.tetrix.game.services.GameService
+import com.badlogic.gdx.graphics.Texture
 import ktx.inject.Context
 
 /** Shape with only tow orientation states (Horizontal / Vertical) */
@@ -10,7 +11,8 @@ abstract class TwoOrientationShape(
     gridPos: GridPosition,
     cubePositions: Array<GridPosition>,
     context: Context,
-) : Shape(gridPos, cubePositions, context) {
+    texture: Texture
+) : Shape(gridPos, cubePositions, context, texture) {
     // NOTE: only has 2 rotation states not 4 like the default shape
     private var orientation = Orientation.Horizontal
 
