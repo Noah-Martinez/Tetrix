@@ -1,27 +1,27 @@
 package ch.tetrix.game.actors
 
+import ch.tetrix.assets.ModelAssets
 import ch.tetrix.game.models.Directions
 import ch.tetrix.game.models.GridPosition
 import ch.tetrix.game.models.MoveResult
 import ch.tetrix.game.services.GameService
 import ch.tetrix.game.stages.GameStage
-import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.graphics.g3d.Environment
 import com.badlogic.gdx.graphics.g3d.ModelBatch
 import com.badlogic.gdx.graphics.g3d.ModelInstance
+import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute
 import com.badlogic.gdx.scenes.scene2d.Actor
 import com.badlogic.gdx.scenes.scene2d.Stage
 import ktx.inject.Context
 import ktx.log.logger
 import ktx.math.vec3
-import net.mgsx.gltf.loaders.glb.GLBLoader
 
-// NOTE: No move function necessary, since gridPosition is based on parent position, so we only need a check for it.
 class Cube(
-    /** position relative to parent */
     var localPos: GridPosition,
     var context: Context,
+    private val texture: Texture,
 ): Actor() {
     private val modelBatch: ModelBatch = context.inject()
     private val environment: Environment = context.inject()
@@ -34,41 +34,35 @@ class Cube(
     val gridPos: GridPosition
         get() = shape.gridPos + localPos
 
+    val modelInstance: ModelInstance = ModelAssets.Cube.createInstance()
+
     companion object {
         const val MODEL_DEPTH: Float = 50f
         private val log = logger<Cube>()
     }
 
-    // cube model
-    private val modelAsset = Gdx.files.internal("model/cube.glb")
-    private val model = GLBLoader().load(modelAsset)
-    val modelInstance = ModelInstance(model.scene.model)
+    init {
+        modelInstance.materials.forEach { mat ->
+            mat.set(TextureAttribute.createDiffuse(texture))
+        }
+    }
 
     override fun setStage(stage: Stage?) {
         super.setStage(stage)
 
-        if (stage !is GameStage) {
-            return
-        }
-
-        grid = stage
+        if (stage is GameStage) grid = stage
     }
 
-    /** makes sure the model is correctly positioned and sized for the grid's cell it belongs to */
     override fun act(delta: Float) {
         super.act(delta)
         val cellDimension = grid.gridToWorldScale(gridPos)
-        width = cellDimension.x
-        height = cellDimension.y
+        width = kotlin.math.round(cellDimension.x)
+        height = kotlin.math.round(cellDimension.y)
 
         val worldPos = grid.gridToWorldPos(gridPos)
         setPosition(worldPos.x, worldPos.y)
     }
 
-    /* NOTE:
-     * Check funktionen müssen unabhängig von den tatsächlichen Aktionen aufrufbar sein.
-     * Da ansonsten partial moves/rotates vorkommen könnten, bei denen nur ein Paar Cubes einer Shape ge moved/rotiert werden.
-     */
     fun canMove(direction: Directions): MoveResult {
         val nextPos = gridPos + direction
         return checkCollision(nextPos)
@@ -82,7 +76,6 @@ class Cube(
         }
     }
 
-    /** doesn't check validity/collisions of action */
     fun rotateClockwise() {
         localPos = localPos.rotatedClockwise()
     }
@@ -95,12 +88,10 @@ class Cube(
         }
     }
 
-    /** doesn't check validity/collisions of action */
     fun rotateCounterClockwise() {
         localPos = localPos.rotatedCounterClockwise()
     }
 
-    /** @param gridPos must be a grid position, local positions will not work */
     private fun checkCollision(gridPos: GridPosition): MoveResult {
         if (GameService.isOutOfBounds(gridPos)) {
             return MoveResult.Collision(null)
@@ -118,16 +109,18 @@ class Cube(
 
         // NOTE: z = -MODEL_DEPTH wenn das front-face des cube mit dem grid aligned sein soll
         val worldPos = vec3(x + width/2f, y + height/2f, 0f)
-        val scaleVec = vec3(width, height, MODEL_DEPTH)
 
-        modelInstance.transform.idt()
+        modelInstance.transform
+            .idt()
             .setToTranslation(worldPos)
-            .scl(scaleVec)
+            .scl(width, height, MODEL_DEPTH)
 
         modelBatch.render(modelInstance, environment)
     }
 
     fun dispose() {
-        model.dispose()
+        // dispose only the instance's resources if needed.
+        // ModelInstance doesn't own the shared Model; we don't dispose it here.
+        // If you added per-instance resources, dispose them here.
     }
 }

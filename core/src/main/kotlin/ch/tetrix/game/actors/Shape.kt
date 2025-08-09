@@ -5,6 +5,7 @@ import ch.tetrix.game.models.GridPosition
 import ch.tetrix.game.models.MoveResult
 import ch.tetrix.game.services.GameService
 import ch.tetrix.shared.GameOverException
+import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.scenes.scene2d.Group
 import ktx.inject.Context
@@ -20,6 +21,7 @@ abstract class Shape(
     /** positions of children relative to shape grid position */
     cubePositions: Array<GridPosition>,
     val context: Context,
+    private val texture: Texture
 ): Group() {
     private val _cubes = arrayListOf<Cube>()
     val cubes: Array<Cube>
@@ -46,7 +48,7 @@ abstract class Shape(
                 throw GameOverException("Cube cannot be initialized in occupied or out of bounds position: $cubeGridPos")
             }
 
-            val cube = Cube(it, context)
+            val cube = Cube(it, context, texture)
             addActor(cube)
             _cubes.add(cube)
         }

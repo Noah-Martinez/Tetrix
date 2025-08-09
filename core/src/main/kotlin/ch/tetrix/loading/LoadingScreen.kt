@@ -1,6 +1,10 @@
 package ch.tetrix.loading
 
 import ch.tetrix.Game
+import ch.tetrix.assets.AudioAssets
+import ch.tetrix.assets.TextureAssets
+import ch.tetrix.assets.load
+import ch.tetrix.assets.loadClamped
 import ch.tetrix.mainmenu.screens.MainMenuScreen
 import ch.tetrix.shared.TxScreen
 import com.badlogic.gdx.InputMultiplexer
@@ -25,6 +29,7 @@ class LoadingScreen(private val context: Context) : TxScreen() {
     private var loadingComplete = false
 
     override fun show() {
+        loadAssets()
         inputMultiplexer.addProcessor(stage)
         loadingUI = LoadingUI(context)
         stage.addActor(loadingUI)
@@ -33,11 +38,16 @@ class LoadingScreen(private val context: Context) : TxScreen() {
         }
     }
 
+    private fun loadAssets() {
+        AudioAssets.entries.forEach { assets.load(it) }
+        TextureAssets.entries.forEach { assets.loadClamped(it) }
+    }
+
     override fun render(delta: Float) {
         super.render(delta)
+
         val assetsFinished = assets.update()
         val progress = assets.progress
-
         loadingUI.updateProgress(progress, assetsFinished)
 
         camera.update()
@@ -51,6 +61,7 @@ class LoadingScreen(private val context: Context) : TxScreen() {
         stage.act(delta)
         stage.draw()
     }
+
 
     override fun resize(width: Int, height: Int) {
         super.resize(width, height)

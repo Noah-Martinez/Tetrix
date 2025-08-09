@@ -1,7 +1,10 @@
 package ch.tetrix.game.actors.shapeImplementations
 
+import ch.tetrix.assets.TextureAssets
+import ch.tetrix.assets.get
 import ch.tetrix.game.actors.TwoOrientationShape
 import ch.tetrix.game.models.GridPosition
+import com.badlogic.gdx.assets.AssetManager
 import ktx.inject.Context
 
 class ZShape(
@@ -16,6 +19,7 @@ class ZShape(
         GridPosition(1, 1),
     ),
     context,
+    texture = context.inject<AssetManager>()[TextureAssets.CUBE_MAGENTA]
 ) {
     override val horizontalPositions = arrayOf(
         GridPosition(-1, 0),
