@@ -51,8 +51,11 @@ abstract class TwoOrientationShape(
 
     private fun doRotate(endPositions: Array<GridPosition>): Boolean {
         val canRotate = endPositions.all {
-            GameService.cubePositions[gridPos + it] == null || GameService.cubePositions[gridPos + it]?.shape == this
+            val endPos = gridPos + it
+            val cubeAtPos = GameService.cubePositions[endPos]
+            (cubeAtPos == null || cubeAtPos.shape == this) && !GameService.isOutOfBounds(endPos)
         }
+
         if (!canRotate) {
             log.info { "Unable to rotate active shape!" }
             return false

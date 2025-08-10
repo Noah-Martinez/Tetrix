@@ -1,86 +1,37 @@
 @startuml
+hide footbox
 title Laufzeitsicht: Spielstart
 
 actor Spieler as Player
-participant "MainWindow" as MW
-participant "GameLoop (Singleton)" as GL
-participant "PersistenceFactory" as PF
-participant "GameState" as GS
-participant "FilePersistence" as FP
+participant Game as G
+participant "LoadingScreen" as LS
+participant "MenuScreen" as MS
+participant "GameScreen" as GS
+participant "AssetManager" as AM
+participant "ScoreScreen" as SS
+participant "OptionsScreen" as OS
+participant "GameField" as GF
 
-== Startsequenz ==
-Player -> MW : startGame()
-activate MW
-MW -> PF : createPersistence(config)
-activate PF
-PF -> FP : new FilePersistence()
-activate FP
-PF --> MW : Persistence-Instanz
-deactivate PF
-
-MW -> FP : load()
-activate FP
-FP --> GS : GameData
-deactivate FP
-
-MW -> GS : initNewGame()
+Player -> G : create()
+activate G
+G -> LS ** : init
+G -> MS ** : init
+G -> GS ** : init
+G -> AM ** : init
+G -> SS  ** : init
+G -> OS  ** : init
+G -> LS : show()
+activate LS
+LS -> LS : loadAssets()
+Player --> LS : <<interact>>
+LS -> MS : show()
+deactivate LS
+activate MS
+Player --> MS : press "Start" button
+MS -> GS : show()
 activate GS
-GS --> MW : initialState
-deactivate GS
-
-MW -> GL : startLoop(GameState)
-activate GL
-GL -> MW : tick() [erste Iteration]
-deactivate MW
-
-note over GL: Der GameLoop läuft nun zyklisch weiter
-@enduml
-----
-
-=== 4.2 Sequenzdiagramm: Stein-Fall & Andocken mit Scoring
-
-[plantuml]
-----
-@startuml
-title Laufzeitsicht: Stein-Fall und Andocken
-
-participant "GameLoop" as GL
-participant "PhysicsEngine" as PE
-participant "GameState" as GS
-participant "ScoringService" as SS
-participant "EventBus" as EB
-participant "FilePersistence" as FP
-participant "MainWindow" as MW
-
-== Fallzyklus ==
-GL -> PE : updatePhysics(GameState)
-activate PE
-PE -> PE : detectCollisions(GameState)
-PE -> GS : reportCollision(collisionDetails)
-PE --> GL : updatedPositions
-deactivate PE
-
-== Andocken & Punktvergabe ==
-GL -> GS : applyCollision(collisionDetails)
-activate GS
-GS --> SS : scoreEvent(pointValue)
-deactivate GS
-
-SS -> EB : publish(ScoreEvent)
-activate EB
-EB -> SS : dispatch(ScoreEvent)
-deactivate EB
-
-SS -> FP : save(ScoreData)
-activate FP
-FP --> SS : ok
-deactivate FP
-
-SS -> MW : updateHighscores(ScoreData)
-activate MW
-MW --> Player : Anzeige neuer Punktestand
-deactivate MW
-
-== Fortsetzung GameLoop ==
-GL -> MW : render(GameState)
+GS -> GF ** : init
+note over GF
+game cycle runs
+endnote
 @enduml

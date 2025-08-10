@@ -3,8 +3,6 @@ package ch.tetrix.game.actors
 import ch.tetrix.game.models.Directions
 import ch.tetrix.game.models.GridPosition
 import ch.tetrix.game.models.MoveResult
-import ch.tetrix.game.services.GameService
-import ch.tetrix.shared.GameOverException
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.scenes.scene2d.Group
@@ -23,7 +21,7 @@ abstract class Shape(
     val context: Context,
     private val texture: Texture
 ): Group() {
-    private val _cubes = arrayListOf<Cube>()
+    protected val _cubes = arrayListOf<Cube>()
     val cubes: Array<Cube>
         get() = _cubes.toTypedArray()
 
@@ -42,13 +40,7 @@ abstract class Shape(
         isTransform = true
 
         cubePositions.forEach {
-            val cubeGridPos = it + gridPos
-            if (GameService.cubePositions[cubeGridPos] != null || GameService.isOutOfBounds(cubeGridPos)) {
-                // NOTE: not optimal since Exception -> stacktrace but works for now...
-                throw GameOverException("Cube cannot be initialized in occupied or out of bounds position: $cubeGridPos")
-            }
-
-            val cube = Cube(it, context, texture)
+            val cube = Cube(it, this, context, texture)
             addActor(cube)
             _cubes.add(cube)
         }
@@ -121,15 +113,15 @@ abstract class Shape(
         val cubesToTransfer = ArrayList(_cubes)
 
         _cubes.clear()
-        log.info { "Removed ${cubesToTransfer.size} cubes from shape (${this.javaClass.simpleName})." }
 
         cubesToTransfer.forEach { cube ->
             cube.localPos = cube.gridPos - targetShape.gridPos
+            cube.shape = targetShape
 
             this.removeActor(cube)
             targetShape.addActor(cube)
             targetShape._cubes.add(cube)
-            log.info { "Transferred cube at absolute ${cube.gridPos} to target shape (${targetShape.javaClass.simpleName}) with new localPos: ${cube.localPos}" }
+            log.debug { "Transferred cube at absolute ${cube.gridPos} to target shape (${targetShape.javaClass.simpleName}) with new localPos: ${cube.localPos}" }
         }
 
         log.info { "Successfully transferred ${cubesToTransfer.size} cubes from shape (${this.javaClass.simpleName}) to shape (${targetShape.javaClass.simpleName})." }

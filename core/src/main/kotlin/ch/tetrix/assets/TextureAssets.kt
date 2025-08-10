@@ -4,9 +4,7 @@ import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.assets.loaders.TextureLoader
 import com.badlogic.gdx.graphics.Texture
 import ktx.assets.getAsset
-import ktx.assets.load
 
-fun AssetManager.load(asset: TextureAssets) = load<Texture>(asset.path)
 operator fun AssetManager.get(asset: TextureAssets) = getAsset<Texture>(asset.path)
 
 fun AssetManager.loadClamped(asset: TextureAssets) {

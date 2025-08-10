@@ -1,0 +1,49 @@
+@startuml
+'hide footbox
+!pragma teoz true
+title Locking (with Lock Delay)
+
+actor Player as P
+participant GameField as GF
+participant CubeShape as CS
+collections Cubes as C
+
+activate GF
+GF -> CS : move()
+activate CS #FFFFFF80
+note over CS
+    see [Brick Move]
+endnote
+CS --> GF : false
+deactivate CS
+GF -> GF : startLockDelay()
+activate GF #EFFFEF
+note right GF
+    Lock Delay (500ms) shape is still movable
+'   https://tetris.fandom.com/wiki/Lock_delay
+'   https://tetris.wiki/Lock_delay
+'   https://harddrop.com/wiki/Lock_delay
+endnote
+alt user interrupted
+    P -->o GF : key pressed
+    & GF -> CS : move() / rotate()
+    activate CS
+    CS -> C : canMove() / canRotate()
+    activate C
+    alt valid move
+        C --> CS : true
+        CS -> CS : updatePos()
+        CS --> GF : true
+        GF -> GF : resetLockDelay()
+    else invalid move
+        C --> CS : false
+        deactivate C
+        CS --> GF : false
+        deactivate CS
+    end
+else no interrupts (timer runs out)
+    GF -> GF : attachCubesToRotor()
+    deactivate GF
+end
+
+@enduml

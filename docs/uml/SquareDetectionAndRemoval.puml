@@ -1,0 +1,40 @@
+@startuml
+start
+
+:maxRadius = max_of_all_cubes
+r = 1 || radius_to_start
+removedSquaresCount = 0; <<input>>
+while (r <= maxRadius) is (ja)
+if (Perimeter r ist vollständig) then (nein)
+  if (removedSquaresCount > 0) then (ja)
+    break;
+  else (nein)
+  endif
+else (ja)
+  :Würfel des Perimeters entfernen;
+  :removedSquaresCount++;
+endif
+  :r++ & nächsten Radius prüfen;
+endwhile
+stop
+
+start
+:maxRadius = max_of_all_cubes
+r = radius_to_start
+endR = radius_to_stop; <<input>>
+while (r < maxRadius) is (yes)
+:rMove = r;
+    repeat
+        :get rMove perimeter positions;
+        if (cubes in perimeter?) then (no)
+            break
+        else (yes)
+            :move cubes in perimeter in 1 radius;
+        endif
+        :rMove--;
+    repeat while (rMove > endR)
+:r++;
+endwhile (no)
+stop
+
+@enduml
