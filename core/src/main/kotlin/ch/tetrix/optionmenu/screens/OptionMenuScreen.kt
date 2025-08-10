@@ -1,7 +1,7 @@
-// OptionMenuScreen.kt - Refactored for key rebinding
-
 package ch.tetrix.optionmenu.screens
 
+import ch.tetrix.GAME_HEIGHT
+import ch.tetrix.GAME_WIDTH
 import ch.tetrix.Game
 import ch.tetrix.mainmenu.screens.MainMenuScreen
 import ch.tetrix.optionmenu.actions.OptionMenuAction
@@ -19,21 +19,21 @@ import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.scenes.scene2d.Stage
 import com.badlogic.gdx.scenes.scene2d.ui.Label
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
-import com.badlogic.gdx.utils.viewport.ScreenViewport
+import com.badlogic.gdx.utils.viewport.FitViewport
 import ktx.inject.Context
 import ktx.log.logger
 import ktx.scene2d.KTableWidget
 import ktx.scene2d.Scene2DSkin
 
 class OptionMenuScreen(context: Context) : TxScreen() {
-    private val screenViewport = ScreenViewport()
-    private val batch: Batch = context.inject()
-    private val game: Game = context.inject()
-    private val inputMultiplexer: InputMultiplexer = context.inject()
+    private val batch by lazy { context.inject<Batch>() }
+    private val game by lazy { context.inject<Game>() }
+    private val inputMultiplexer by lazy { context.inject<InputMultiplexer>() }
 
-    override val stage: Stage by lazy { Stage(screenViewport, batch) }
+    private val viewport by lazy { FitViewport(GAME_WIDTH, GAME_HEIGHT) }
+    override val stage by lazy { Stage(viewport, batch) }
 
-    var optionMenuLayout: KTableWidget = createOptionMenuLayout(Scene2DSkin.defaultSkin)
+    private var optionMenuLayout = createOptionMenuLayout(Scene2DSkin.defaultSkin)
 
     private var labelToUpdate: Label? = null
 
@@ -56,6 +56,10 @@ class OptionMenuScreen(context: Context) : TxScreen() {
     override fun resize(width: Int, height: Int) {
         super.resize(width, height)
         stage.viewport.update(width, height, true)
+    }
+
+    override fun dispose() {
+        inputMultiplexer.removeProcessor(stage)
     }
 
     private fun createOptionMenuLayout(skin: Skin): KTableWidget {

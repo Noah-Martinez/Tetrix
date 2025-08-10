@@ -1,17 +1,16 @@
 package ch.tetrix.game.stages
 
+import ch.tetrix.GAME_HEIGHT
+import ch.tetrix.GAME_WIDTH
 import ch.tetrix.game.GameInputController
 import ch.tetrix.game.actors.Cube.Companion.MODEL_DEPTH
 import ch.tetrix.game.models.Directions
 import ch.tetrix.game.models.GridPosition
 import ch.tetrix.game.screens.ComponentBackground
-import ch.tetrix.game.screens.GAME_VIEWPORT_HEIGHT
-import ch.tetrix.game.screens.GAME_VIEWPORT_WIDTH
 import ch.tetrix.game.services.GameService
 import ch.tetrix.shared.ConfigManager
 import ch.tetrix.shared.KeyHoldConfig
 import ch.tetrix.shared.KeyHoldSystem
-import ch.tetrix.shared.models.PlayerConfig
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.InputMultiplexer
 import com.badlogic.gdx.graphics.GL20
@@ -24,7 +23,6 @@ import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.scenes.scene2d.Stage
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import com.badlogic.gdx.utils.viewport.FitViewport
-import kotlin.math.max
 import ktx.inject.Context
 import ktx.inject.register
 import ktx.log.logger
@@ -33,15 +31,16 @@ import ktx.math.vec2
 import ktx.math.vec3
 import ktx.scene2d.KTableWidget
 import net.mgsx.gltf.scene3d.lights.DirectionalLightEx
+import kotlin.math.max
 
 class GameStage(
     val context: Context,
     batch: Batch,
-) : Stage(FitViewport(GAME_VIEWPORT_WIDTH, GAME_VIEWPORT_HEIGHT), batch) {
-    private val skin = context.inject<Skin>()
-    private val inputMultiplexer = context.inject<InputMultiplexer>()
-    private val componentBackground = context.inject<ComponentBackground>().drawable
-    private val config: PlayerConfig by lazy { ConfigManager.playerConfig }
+) : Stage(FitViewport(GAME_WIDTH, GAME_HEIGHT), batch) {
+    private val skin by lazy { context.inject<Skin>() }
+    private val inputMultiplexer by lazy { context.inject<InputMultiplexer>() }
+    private val componentBackground by lazy { context.inject<ComponentBackground>().drawable }
+    private val config by lazy { ConfigManager.playerConfig }
 
     private val modelBatch = ModelBatch()
 

@@ -1,5 +1,7 @@
 package ch.tetrix.loading.screens
 
+import ch.tetrix.GAME_HEIGHT
+import ch.tetrix.GAME_WIDTH
 import ch.tetrix.Game
 import ch.tetrix.assets.AudioAssets
 import ch.tetrix.assets.TextureAssets
@@ -16,19 +18,20 @@ import com.badlogic.gdx.scenes.scene2d.Stage
 import com.badlogic.gdx.scenes.scene2d.ui.Label
 import com.badlogic.gdx.scenes.scene2d.ui.ProgressBar
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
-import com.badlogic.gdx.utils.viewport.ScreenViewport
+import com.badlogic.gdx.utils.viewport.FitViewport
 import ktx.inject.Context
 import ktx.scene2d.KTableWidget
 import ktx.scene2d.Scene2DSkin
 
 class LoadingScreen(context: Context) : TxScreen() {
-    private val screenViewport = ScreenViewport()
-    private val game: Game = context.inject()
-    private val batch: Batch = context.inject()
-    private val assets: AssetManager = context.inject()
-
-    override val stage: Stage by lazy { Stage(screenViewport, batch) }
+    private val game by lazy { context.inject<Game>() }
+    private val batch by lazy { context.inject<Batch>() }
+    private val assets by lazy { context.inject<AssetManager>() }
     private val inputMultiplexer: InputMultiplexer by lazy { context.inject() }
+
+    private val viewport by lazy { FitViewport(GAME_WIDTH, GAME_HEIGHT) }
+    override val stage by lazy { Stage(viewport, batch) }
+
     private var assetsLoaded: Boolean = false
 
     private lateinit var progressBar: ProgressBar

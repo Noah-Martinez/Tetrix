@@ -27,6 +27,7 @@ object OptionMenuViewBuilder {
 
         return KTableWidget(skin).apply {
             setFillParent(true)
+            pad(16f)
             defaults()
 
             row().spaceBottom(24f).expand()
