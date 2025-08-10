@@ -1,7 +1,13 @@
 package ch.tetrix.game.models
 
 import ch.tetrix.game.actors.Shape
-import ch.tetrix.game.actors.shapeImplementations.*
+import ch.tetrix.game.actors.shapeImplementations.IShape
+import ch.tetrix.game.actors.shapeImplementations.JShape
+import ch.tetrix.game.actors.shapeImplementations.LShape
+import ch.tetrix.game.actors.shapeImplementations.OShape
+import ch.tetrix.game.actors.shapeImplementations.SShape
+import ch.tetrix.game.actors.shapeImplementations.TShape
+import ch.tetrix.game.actors.shapeImplementations.ZShape
 import ktx.inject.Context
 
 enum class ShapeType(private val factory: (Context, GridPosition?) -> Shape) {

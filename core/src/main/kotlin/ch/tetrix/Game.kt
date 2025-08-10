@@ -21,6 +21,9 @@ import ktx.inject.register
 import ktx.log.logger
 import ktx.scene2d.Scene2DSkin
 
+const val GAME_WIDTH = 600f
+const val GAME_HEIGHT = 500f
+
 class Game : KtxGame<TxScreen>() {
     private val batch: Batch by lazy { SpriteBatch() }
 

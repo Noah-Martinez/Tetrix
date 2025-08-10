@@ -1,5 +1,7 @@
 package ch.tetrix.game.screens
 
+import ch.tetrix.GAME_HEIGHT
+import ch.tetrix.GAME_WIDTH
 import ch.tetrix.Game
 import ch.tetrix.game.actions.GameOverAction
 import ch.tetrix.game.components.GameOverViewBuilder
@@ -11,22 +13,21 @@ import ch.tetrix.shared.TxScreen
 import com.badlogic.gdx.InputMultiplexer
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.scenes.scene2d.Stage
-import com.badlogic.gdx.utils.viewport.ScreenViewport
+import com.badlogic.gdx.utils.viewport.FitViewport
 import ktx.inject.Context
 import ktx.log.logger
 import ktx.scene2d.KTableWidget
 import ktx.scene2d.Scene2DSkin
 
 class GameOverScreen(val context: Context) : TxScreen() {
-    private val screenViewport = ScreenViewport()
-    private val batch: Batch = context.inject()
-    private val game: Game = context.inject()
-    private val scoreRepository: ScoreboardRepository = context.inject()
+    private val batch by lazy { context.inject<Batch>() }
+    private val game by lazy { context.inject<Game>() }
+    private val scoreRepository by lazy { context.inject<ScoreboardRepository>() }
+    private val inputMultiplexer by lazy { context.inject<InputMultiplexer>() }
 
-    override val stage: Stage by lazy { Stage(screenViewport, batch).apply {
-    } }
+    private val viewport by lazy { FitViewport(GAME_WIDTH, GAME_HEIGHT) }
+    override val stage by lazy { Stage(viewport, batch) }
 
-    private val inputMultiplexer: InputMultiplexer by lazy { context.inject() }
     private val gameOverMenuLayout: KTableWidget by lazy {
         GameOverViewBuilder.layout(
             skin = Scene2DSkin.defaultSkin,

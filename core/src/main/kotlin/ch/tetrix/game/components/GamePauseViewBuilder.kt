@@ -39,8 +39,6 @@ object GamePauseViewBuilder {
                 defaults().width(240f).height(36f).space(16f)
                 textButton("CONTINUE").onClick { onPauseMenuAction(GamePauseAction.Continue) }
                 row()
-                textButton("OPTIONS").onClick { onPauseMenuAction(GamePauseAction.Options) }
-                row()
                 textButton("MAIN MENU").onClick { onPauseMenuAction(GamePauseAction.MainMenu) }
             }
         }

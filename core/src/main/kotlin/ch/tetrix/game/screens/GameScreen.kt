@@ -1,5 +1,7 @@
 package ch.tetrix.game.screens
 
+import ch.tetrix.GAME_HEIGHT
+import ch.tetrix.GAME_WIDTH
 import ch.tetrix.Game
 import ch.tetrix.game.actions.GamePauseAction
 import ch.tetrix.game.components.GamePauseViewBuilder
@@ -21,9 +23,6 @@ import ktx.inject.register
 import ktx.log.logger
 import ktx.scene2d.Scene2DSkin
 
-const val GAME_VIEWPORT_WIDTH = 600f
-const val GAME_VIEWPORT_HEIGHT = 500f
-
 data class ComponentBackground(val drawable: Drawable)
 data class ValueBackground(val drawable: Drawable)
 
@@ -31,18 +30,17 @@ data class ValueBackground(val drawable: Drawable)
  * Main game screen that coordinates the different components of the game.
  */
 class GameScreen(val context: Context) : TxScreen() {
+    private val game by lazy { context.inject<Game>() }
+    private val inputMultiplexer by lazy { context.inject<InputMultiplexer>() }
+
     private val batch = SpriteBatch()
 
-    override val stage: Stage by lazy {
-        Stage(FitViewport(GAME_VIEWPORT_WIDTH, GAME_VIEWPORT_HEIGHT), batch) // Use FitViewport here
-    }
+    private val viewport by lazy { FitViewport(GAME_WIDTH, GAME_HEIGHT) }
+    override val stage by lazy { Stage(viewport, batch) }
 
-    private val pauseStage: Stage by lazy {
-        Stage(ExtendViewport(GAME_VIEWPORT_WIDTH, GAME_VIEWPORT_HEIGHT), batch) // Uses the entire screen
+    private val pauseStage by lazy {
+        Stage(ExtendViewport(GAME_WIDTH, GAME_HEIGHT), batch) // Uses the entire screen
     }
-
-    private val game: Game by lazy { context.inject() }
-    private val inputMultiplexer: InputMultiplexer by lazy { context.inject() }
 
     private val componentBackground by lazy { skin.getDrawable("table-background-round") }
     private val valueBackground by lazy { skin.getDrawable("game-value-bg") }
@@ -128,7 +126,6 @@ class GameScreen(val context: Context) : TxScreen() {
     private fun handlePauseMenuAction(action: GamePauseAction) {
         when (action) {
             GamePauseAction.Continue -> resumeGame()
-            GamePauseAction.Options -> showOptionsMenu()
             GamePauseAction.MainMenu -> goToMainMenu()
         }
     }
@@ -145,11 +142,6 @@ class GameScreen(val context: Context) : TxScreen() {
         inputMultiplexer.removeProcessor(pauseStage)
 
         GameService.resumeGame()
-    }
-
-    private fun showOptionsMenu() {
-        log.info { "Show Option Menu" }
-        // TODO Show option Menu
     }
 
     private fun goToMainMenu() {

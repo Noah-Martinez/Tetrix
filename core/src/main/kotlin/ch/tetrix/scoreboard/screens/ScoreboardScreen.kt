@@ -1,27 +1,22 @@
 package ch.tetrix.scoreboard.screens
 
+import ch.tetrix.GAME_HEIGHT
+import ch.tetrix.GAME_WIDTH
 import ch.tetrix.Game
 import ch.tetrix.mainmenu.screens.MainMenuScreen
 import ch.tetrix.scoreboard.components.ScoreboardViewBuilder
 import ch.tetrix.shared.TxScreen
-import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.InputMultiplexer
 import com.badlogic.gdx.scenes.scene2d.Stage
-import com.badlogic.gdx.utils.viewport.ExtendViewport
+import com.badlogic.gdx.utils.viewport.FitViewport
 import ktx.inject.Context
 
 class ScoreboardScreen(private val context: Context): TxScreen() {
     val game: Game by lazy { context.inject() }
     val inputMultiplexer: InputMultiplexer by lazy { context.inject() }
 
-    override val stage by lazy {
-        Stage(
-            ExtendViewport(
-                Gdx.graphics.width.toFloat(),
-                Gdx.graphics.height.toFloat()
-            )
-        )
-    }
+    private val viewport by lazy { FitViewport(GAME_WIDTH, GAME_HEIGHT) }
+    override val stage by lazy { Stage(viewport) }
 
     override fun show() {
         super.show()
