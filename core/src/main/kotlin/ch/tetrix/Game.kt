@@ -2,7 +2,7 @@ package ch.tetrix
 
 import ch.tetrix.assets.SkinAssets
 import ch.tetrix.assets.load
-import ch.tetrix.loading.LoadingScreen
+import ch.tetrix.loading.screens.LoadingScreen
 import ch.tetrix.scoreboard.repositories.ScoreboardRepository
 import ch.tetrix.scoreboard.services.ScoreboardService
 import ch.tetrix.shared.TxScreen
