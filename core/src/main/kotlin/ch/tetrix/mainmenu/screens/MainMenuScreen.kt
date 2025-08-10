@@ -4,6 +4,7 @@ import ch.tetrix.Game
 import ch.tetrix.game.screens.GameScreen
 import ch.tetrix.mainmenu.actions.MainMenuAction
 import ch.tetrix.mainmenu.components.MainMenuViewBuilder
+import ch.tetrix.optionmenu.screens.OptionMenuScreen
 import ch.tetrix.scoreboard.screens.ScoreboardScreen
 import ch.tetrix.shared.TxScreen
 import com.badlogic.gdx.Gdx
@@ -77,7 +78,8 @@ class MainMenuScreen(private val context: Context) : TxScreen() {
 
     private fun showOptionsMenu() {
         log.info { "Opening options..." }
-        // TODO: Show options screen or overlay
+        game.removeScreen<MainMenuScreen>()
+        game.setScreen<OptionMenuScreen>()
     }
 
     private fun showScoresMenu() {

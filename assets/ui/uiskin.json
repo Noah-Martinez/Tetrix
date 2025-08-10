@@ -98,6 +98,9 @@ com.badlogic.gdx.scenes.scene2d.ui.Label$LabelStyle: {
     title-large: {
         font: title-large
     }
+    snackbar: {
+        font: snackbar
+    }
 }
 com.badlogic.gdx.scenes.scene2d.ui.List$ListStyle: {
     default: {

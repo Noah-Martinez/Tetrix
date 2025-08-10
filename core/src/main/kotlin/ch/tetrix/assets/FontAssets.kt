@@ -104,5 +104,19 @@ enum class FontAssets(
             shadowOffsetX = 5
             shadowOffsetY = 5
         }
-    )
+    ),
+    Snackbar(
+        "snackbar",
+        "fonts/PressStart2P-Regular.ttf",
+        {
+            size = 12
+            mono = true
+            kerning = true
+            incremental = true
+            padTop = 0
+            minFilter = Texture.TextureFilter.Nearest
+            magFilter = Texture.TextureFilter.Nearest
+            spaceY = 8
+        }
+    ),
 }

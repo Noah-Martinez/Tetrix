@@ -1,16 +1,18 @@
 package ch.tetrix.game.stages
 
-import ch.tetrix.game.actors.Cube
+import ch.tetrix.game.GameInputController
+import ch.tetrix.game.actors.Cube.Companion.MODEL_DEPTH
 import ch.tetrix.game.models.Directions
 import ch.tetrix.game.models.GridPosition
 import ch.tetrix.game.screens.ComponentBackground
 import ch.tetrix.game.screens.GAME_VIEWPORT_HEIGHT
 import ch.tetrix.game.screens.GAME_VIEWPORT_WIDTH
 import ch.tetrix.game.services.GameService
+import ch.tetrix.shared.ConfigManager
 import ch.tetrix.shared.KeyHoldConfig
 import ch.tetrix.shared.KeyHoldSystem
+import ch.tetrix.shared.models.PlayerConfig
 import com.badlogic.gdx.Gdx
-import com.badlogic.gdx.Input
 import com.badlogic.gdx.InputMultiplexer
 import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.graphics.g2d.Batch
@@ -22,31 +24,28 @@ import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.scenes.scene2d.Stage
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import com.badlogic.gdx.utils.viewport.FitViewport
-import ktx.app.KtxInputAdapter
+import kotlin.math.max
 import ktx.inject.Context
 import ktx.inject.register
+import ktx.log.logger
 import ktx.math.plus
 import ktx.math.vec2
 import ktx.math.vec3
 import ktx.scene2d.KTableWidget
 import net.mgsx.gltf.scene3d.lights.DirectionalLightEx
-import kotlin.math.max
 
-/** visual table, also used to get the size for cubes */
 class GameStage(
     val context: Context,
     batch: Batch,
-): Stage(FitViewport(GAME_VIEWPORT_WIDTH, GAME_VIEWPORT_HEIGHT), batch) {
+) : Stage(FitViewport(GAME_VIEWPORT_WIDTH, GAME_VIEWPORT_HEIGHT), batch) {
     private val skin = context.inject<Skin>()
     private val inputMultiplexer = context.inject<InputMultiplexer>()
     private val componentBackground = context.inject<ComponentBackground>().drawable
+    private val config: PlayerConfig by lazy { ConfigManager.playerConfig }
 
     private val modelBatch = ModelBatch()
 
-    /** changes the rotation angles for the camera, viewport and cube positions are adjusted to fit the gird */
     private val cameraRotationDeg = vec2(-3f, 2f)
-
-    /** Rotation of the stage directional light. Will be normalized so keep between 1 and -1. */
     private val lightRotationNor = vec3(-1f, -1f, 0f)
 
     private val stageEnvironment = Environment().apply {
@@ -57,70 +56,42 @@ class GameStage(
         set(ColorAttribute.createAmbientLight(0.8f, 0.8f, 0.8f, 0.3f))
     }
 
-    private val keyHoldSystem = KeyHoldSystem(
-        mapOf(
-            Pair(Input.Keys.A, KeyHoldConfig(0.2f) { handleKeyInputs(it) }),
-            Pair(Input.Keys.D, KeyHoldConfig(0.2f) { handleKeyInputs(it) }),
-    ))
+    private var keyHoldSystem: KeyHoldSystem = buildKeyHoldSystem()
+    private fun buildKeyHoldSystem(): KeyHoldSystem =
+        KeyHoldSystem(
+            mapOf(
+                config.tetromino.moveLeft to KeyHoldConfig(0.2f) { handleKeyInputs(it) },
+                config.tetromino.moveRight to KeyHoldConfig(0.2f) { handleKeyInputs(it) },
+            )
+        )
 
-    /**
-     * Eigener InputAdapter für W/S Tasten, um fastFall zu steuern
-     */
-    private val movementInputAdapter = object : KtxInputAdapter {
-        override fun keyDown(keycode: Int): Boolean {
-            if (!GameService.isGameActive.value) {
-                return false
-            }
-
-            when (keycode) {
-                Input.Keys.W -> {
-                    return GameService.enableFastFall(Directions.UP)
-                }
-                Input.Keys.S -> {
-                    return GameService.enableFastFall(Directions.DOWN)
-                }
-                Input.Keys.Q -> {
-                    GameService.rotateActiveShapeCounterClockwise()
-                    return true
-                }
-                Input.Keys.E -> {
-                    GameService.rotateActiveShapeClockwise()
-                    return true
-                }
-                Input.Keys.J -> {
-                    GameService.rotateRotorCounterClockwise()
-                    return true
-                }
-                Input.Keys.L -> {
-                    GameService.rotateRotorClockwise()
-                    return true
-                }
-            }
-            return false
-        }
-
-        override fun keyUp(keycode: Int): Boolean {
-            when (keycode) {
-                Input.Keys.W, Input.Keys.S -> {
-                    GameService.disableFastFall()
-                    return true
-                }
-            }
-            return false
+    private val inputController = GameInputController(config) { action ->
+        if (!GameService.isGameActive.value) return@GameInputController
+        when (action) {
+            GameInputController.Action.MoveUp -> GameService.enableFastFall(Directions.UP)
+            GameInputController.Action.MoveDown -> GameService.enableFastFall(Directions.DOWN)
+            GameInputController.Action.Snap -> log.info { "Snap tetromino" }
+            GameInputController.Action.RotLeft -> GameService.rotateActiveShapeCounterClockwise()
+            GameInputController.Action.RotRight -> GameService.rotateActiveShapeClockwise()
+            GameInputController.Action.RotorLeft -> GameService.rotateRotorCounterClockwise()
+            GameInputController.Action.RotorRight -> GameService.rotateRotorClockwise()
+            GameInputController.Action.FastFallOff -> GameService.disableFastFall()
         }
     }
+
+    companion object {
+        private val log = logger<GameStage>()
+    }
+
     var tableSizeSet = false
     val table = KTableWidget(skin).apply {
         setBackground(componentBackground)
-
         top()
         left()
 
         defaults().uniform()
         repeat(GameService.NUM_ROWS) {
-            repeat(GameService.NUM_COLS) {
-                add()
-            }
+            repeat(GameService.NUM_COLS) { add() }
             row()
             // TODO: show max rotor size
         }
@@ -135,7 +106,7 @@ class GameStage(
         rotateAndFitCamera(cameraRotationDeg)
 
         inputMultiplexer.addProcessor(keyHoldSystem)
-        inputMultiplexer.addProcessor(movementInputAdapter)
+        inputMultiplexer.addProcessor(inputController)
 
         addActor(table)
     }
@@ -159,17 +130,10 @@ class GameStage(
     }
 
     private fun handleKeyInputs(keycode: Int) {
-        if (!GameService.isGameActive.value) {
-            return
-        }
-
+        if (!GameService.isGameActive.value) return
         when (keycode) {
-            Input.Keys.A -> {
-                GameService.moveActiveShape(Directions.LEFT)
-            }
-            Input.Keys.D -> {
-                GameService.moveActiveShape(Directions.RIGHT)
-            }
+            config.tetromino.moveLeft -> GameService.moveActiveShape(Directions.LEFT)
+            config.tetromino.moveRight -> GameService.moveActiveShape(Directions.RIGHT)
         }
     }
 
@@ -227,8 +191,7 @@ class GameStage(
     }
 
     private fun getCameraAngleCompensation(): Vector2 {
-        val zFront = Cube.Companion.MODEL_DEPTH / 2f
-
+        val zFront = MODEL_DEPTH / 2f
         val radX = cameraRotationDeg.x * MathUtils.degRad
         val radY = cameraRotationDeg.y * MathUtils.degRad
 
@@ -254,6 +217,6 @@ class GameStage(
             remove<Environment>()
         }
         inputMultiplexer.removeProcessor(keyHoldSystem)
-        inputMultiplexer.removeProcessor(movementInputAdapter)
+        inputMultiplexer.removeProcessor(inputController)
     }
 }
