@@ -20,16 +20,14 @@ import ktx.math.vec3
 
 class Cube(
     var localPos: GridPosition,
-    var context: Context,
+    var shape: Shape,
+    context: Context,
     private val texture: Texture,
 ): Actor() {
     private val modelBatch: ModelBatch = context.inject()
     private val environment: Environment = context.inject()
 
     private lateinit var grid: GameStage
-
-    val shape: Shape
-        get() = parent as Shape
 
     val gridPos: GridPosition
         get() = shape.gridPos + localPos
@@ -116,11 +114,5 @@ class Cube(
             .scl(width, height, MODEL_DEPTH)
 
         modelBatch.render(modelInstance, environment)
-    }
-
-    fun dispose() {
-        // dispose only the instance's resources if needed.
-        // ModelInstance doesn't own the shared Model; we don't dispose it here.
-        // If you added per-instance resources, dispose them here.
     }
 }

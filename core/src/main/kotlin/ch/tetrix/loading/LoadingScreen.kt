@@ -43,6 +43,7 @@ class LoadingScreen(private val context: Context) : TxScreen() {
         TextureAssets.entries.forEach { assets.loadClamped(it) }
     }
 
+    // TODO: block until all textures are loaded
     override fun render(delta: Float) {
         super.render(delta)
 

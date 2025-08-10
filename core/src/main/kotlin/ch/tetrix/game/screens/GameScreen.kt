@@ -116,7 +116,6 @@ class GameScreen(val context: Context) : TxScreen() {
         pauseStage.dispose()
         gameStage.dispose()
         GameService.endGame()
-        GameService.disposeAllCubes()
         context.apply {
             remove<GameService>()
             remove<ComponentBackground>()

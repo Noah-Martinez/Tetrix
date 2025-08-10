@@ -1,0 +1,21 @@
+@startuml
+hide footbox
+title Brick Move
+
+participant GameField as GF
+participant CubeShape as CS
+collections Cubes as C
+
+activate GF
+loop
+    GF -> CS : move()
+    activate CS
+    CS -> C : canMove()
+    activate C
+    C --> CS : true
+    deactivate C
+    CS -> CS : updatePos()
+    CS --> GF : true
+    deactivate CS
+end
+@enduml

@@ -22,7 +22,6 @@ import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.scenes.scene2d.Stage
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import com.badlogic.gdx.utils.viewport.FitViewport
-import kotlin.math.max
 import ktx.app.KtxInputAdapter
 import ktx.inject.Context
 import ktx.inject.register
@@ -31,6 +30,7 @@ import ktx.math.vec2
 import ktx.math.vec3
 import ktx.scene2d.KTableWidget
 import net.mgsx.gltf.scene3d.lights.DirectionalLightEx
+import kotlin.math.max
 
 /** visual table, also used to get the size for cubes */
 class GameStage(
@@ -122,6 +122,7 @@ class GameStage(
                 add()
             }
             row()
+            // TODO: show max rotor size
         }
     }
 
@@ -254,6 +255,5 @@ class GameStage(
         }
         inputMultiplexer.removeProcessor(keyHoldSystem)
         inputMultiplexer.removeProcessor(movementInputAdapter)
-        GameService.disposeAllCubes()
     }
 }
