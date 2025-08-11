@@ -47,6 +47,17 @@ class GameStage(
     private val cameraRotationDeg = vec2(-3f, 2f)
     private val lightRotationNor = vec3(-1f, -1f, 0f)
 
+    private val cameraCompensation by lazy {
+        val zFront = MODEL_DEPTH / 2f
+        val radX = cameraRotationDeg.x * MathUtils.degRad
+        val radY = cameraRotationDeg.y * MathUtils.degRad
+
+        val dy = zFront * MathUtils.tan(radX)
+        val dx = -zFront * MathUtils.tan(radY)
+
+        Vector2(dx, dy)
+    }
+
     private val stageEnvironment = Environment().apply {
         add(DirectionalLightEx().apply {
             color.set(0.3f, 0.3f, 0.3f, 0.1f)
@@ -69,7 +80,7 @@ class GameStage(
         when (action) {
             GameInputController.Action.MoveUp -> GameService.enableFastFall(Directions.UP)
             GameInputController.Action.MoveDown -> GameService.enableFastFall(Directions.DOWN)
-            GameInputController.Action.Snap -> log.info { "Snap tetromino" }
+            GameInputController.Action.Snap -> GameService.snapActiveShape()
             GameInputController.Action.RotLeft -> GameService.rotateActiveShapeCounterClockwise()
             GameInputController.Action.RotRight -> GameService.rotateActiveShapeClockwise()
             GameInputController.Action.RotorLeft -> GameService.rotateRotorCounterClockwise()
@@ -183,21 +194,8 @@ class GameStage(
 
         val tablePos = vec2(table.x, table.y)
         val cellPos = vec2(cell.actorX, cell.actorY)
-        // TODO-performance: store and update when needed instead of calculating every time
-        val compensatedPos = getCameraAngleCompensation()
 
-        return tablePos + cellPos + compensatedPos
-    }
-
-    private fun getCameraAngleCompensation(): Vector2 {
-        val zFront = MODEL_DEPTH / 2f
-        val radX = cameraRotationDeg.x * MathUtils.degRad
-        val radY = cameraRotationDeg.y * MathUtils.degRad
-
-        val dy = zFront * MathUtils.tan(radX)
-        val dx = -zFront * MathUtils.tan(radY)
-
-        return Vector2(dx, dy)
+        return tablePos + cellPos + cameraCompensation
     }
 
     /** gets the dimensions of a cell in the grid from a grid position */

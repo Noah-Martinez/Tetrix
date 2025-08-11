@@ -15,6 +15,7 @@ import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import ktx.app.KtxGame
+import ktx.async.KtxAsync
 import ktx.freetype.registerFreeTypeFontLoaders
 import ktx.inject.Context
 import ktx.inject.register
@@ -36,6 +37,7 @@ class Game : KtxGame<TxScreen>() {
 
     override fun create() {
         super.create()
+        KtxAsync.initiate()
 
         // register FreeTypeFont loader:
         assets.registerFreeTypeFontLoaders(replaceDefaultBitmapFontLoader = true)
