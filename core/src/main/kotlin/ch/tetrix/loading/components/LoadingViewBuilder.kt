@@ -32,7 +32,7 @@ object LoadingViewBuilder {
                 .maxWidth(600f).center()
 
             row().space(16f)
-            label("Tetrix", "title-large")
+            label("TETRIX", "title-large")
 
             row()
             statusLabelRef = label("Loading assets...")

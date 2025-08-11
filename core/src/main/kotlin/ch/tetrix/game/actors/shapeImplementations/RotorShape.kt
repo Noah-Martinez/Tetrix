@@ -23,7 +23,8 @@ class RotorShape(
         GridPosition(0, 0),
     ),
     context,
-    texture = context.inject<AssetManager>()[TextureAssets.CUBE_RED]
+    texture = context.inject<AssetManager>()[TextureAssets.CUBE_RED],
+    glow = true,
 ) {
     data class SquaresResult(
         val cubesDestroyed: Int,
