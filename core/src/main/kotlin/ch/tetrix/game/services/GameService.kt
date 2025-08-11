@@ -150,6 +150,18 @@ object GameService {
         return moveResult
     }
 
+    fun snapActiveShape() {
+        if (!isGameActive.value || activeShape == null) {
+            return
+        }
+
+        gameTimer?.cancel()
+        do {
+            val result = moveActiveShape(activeShape!!.fallDirection)
+        } while (result is MoveResult.Success)
+        scheduleNextStep()
+    }
+
     fun rotateActiveShapeClockwise() {
         if (!isGameActive.value || activeShape == null) {
             return
@@ -219,11 +231,12 @@ object GameService {
         }
 
         handleCollision(moveResult, activeShape)
-        scheduleNextStep()
     }
 
     private fun handleCollision(moveResult: MoveResult.Collision, activeShape: Shape) {
         val collidedWith = moveResult.collisionObject
+
+        scheduleNextStep()
 
         if (collidedWith == null) {
             handleGameBorderCollision(activeShape)
@@ -299,12 +312,17 @@ object GameService {
         _shapes.remove(activeShape)
         activeShape = null
 
-        val result = rotor!!.removeSquares()
+        gameTimer?.cancel()
 
-        log.info { "Shape attached to rotor. Cubes: ${result.cubesDestroyed}, Squares: ${result.squaresDestroyed}" }
-        updateScore(result.cubesDestroyed * result.squaresDestroyed)
-        squares.dispatch(squares.value + result.squaresDestroyed)
-        updateLevel()
+        rotor!!.removeSquaresAsync { result ->
+            log.info { "Shape attached to rotor. Cubes: ${result.cubesDestroyed}, Squares: ${result.squaresDestroyed}" }
+            updateScore(result.cubesDestroyed * result.squaresDestroyed)
+            squares.dispatch(squares.value + result.squaresDestroyed)
+            updateLevel()
+
+            log.error { "Next step" }
+            scheduleNextStep()
+        }
     }
 
     private fun startLockDelayTimer() {

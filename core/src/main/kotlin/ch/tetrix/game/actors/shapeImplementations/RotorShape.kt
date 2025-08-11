@@ -9,6 +9,9 @@ import ch.tetrix.game.models.GridPosition
 import ch.tetrix.game.models.MoveResult
 import ch.tetrix.game.services.GameService
 import com.badlogic.gdx.assets.AssetManager
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import ktx.async.KtxAsync
 import ktx.inject.Context
 import kotlin.math.abs
 
@@ -43,42 +46,45 @@ class RotorShape(
      *
      * @return cubesDestroyed & squaresDestroyed
      */
-    fun removeSquares(): SquaresResult {
-        var cubesDestroyed = 0
-        var fullSquares = 0
-        var radius = 1
+    fun removeSquaresAsync(onDone: (SquaresResult) -> Unit) {
+        KtxAsync.launch {
+            var cubesDestroyed = 0
+            var fullSquares = 0
+            var radius = 1
 
-        var consecutiveSquares = 0
+            var consecutiveSquares = 0
 
-        while (radius <= maxCubeRadius) {
-            log.info { "Checking for full squares in radius $radius" }
-            val perimeterPositions = getPerimeterPositions(radius)
+            while (radius <= maxCubeRadius) {
+                log.info { "Checking for full squares in radius $radius" }
+                val perimeterPositions = getPerimeterPositions(radius)
 
-            val isPerimeterFull = perimeterPositions.all { cubePositions.contains(it) }
+                val isPerimeterFull = perimeterPositions.all { cubePositions.contains(it) }
 
-            if (isPerimeterFull) {
-                log.info { "Found full square of ${perimeterPositions.size} in radius $radius" }
-                val perimeterCubes = perimeterPositions.mapNotNull { cubes.find { cube -> cube.localPos == it } }
+                if (isPerimeterFull) {
+                    log.info { "Found full square of ${perimeterPositions.size} in radius $radius" }
+                    val perimeterCubes = perimeterPositions.mapNotNull { cubes.find { cube -> cube.localPos == it } }
 
-                perimeterCubes.forEach {
-                    _cubes.remove(it)
-                    it.remove()
-                    cubesDestroyed++
+                    perimeterCubes.forEach {
+                        _cubes.remove(it)
+                        it.remove()
+                        cubesDestroyed++
+                    }
+                    fullSquares++
+                    consecutiveSquares++
                 }
-                fullSquares++
-                consecutiveSquares++
-            }
-            else if (consecutiveSquares > 0) {
-                moveCubesIn(radius, consecutiveSquares)
-                radius -= consecutiveSquares
-                consecutiveSquares = 0
-                continue
+                else if (consecutiveSquares > 0) {
+                    delay(500)
+                    moveCubesIn(radius, consecutiveSquares)
+                    radius -= consecutiveSquares
+                    consecutiveSquares = 0
+                    continue
+                }
+
+                radius++
             }
 
-            radius++
+            onDone(SquaresResult(cubesDestroyed, fullSquares))
         }
-
-        return SquaresResult(cubesDestroyed, fullSquares)
     }
 
     private fun getPerimeterPositions(radius: Int): Set<GridPosition> {
@@ -105,7 +111,7 @@ class RotorShape(
         return perimeterPositions
     }
 
-    private fun moveCubesIn(radius: Int, stepCount: Int) {
+    private suspend fun moveCubesIn(radius: Int, stepCount: Int) {
         log.info { "Starting to move in cubes from radius $radius" }
         var moveRadius = radius
 
@@ -134,6 +140,7 @@ class RotorShape(
                 }
             }
 
+            delay(100)
             moveRadius++
         }
     }
