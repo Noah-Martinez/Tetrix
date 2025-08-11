@@ -19,7 +19,8 @@ abstract class Shape(
     /** positions of children relative to shape grid position */
     cubePositions: Array<GridPosition>,
     val context: Context,
-    private val texture: Texture
+    private val texture: Texture,
+    private val glow: Boolean = false,
 ): Group() {
     protected val _cubes = arrayListOf<Cube>()
     val cubes: Array<Cube>
@@ -40,7 +41,7 @@ abstract class Shape(
         isTransform = true
 
         cubePositions.forEach {
-            val cube = Cube(it, this, context, texture)
+            val cube = Cube(it, this, context, texture, glow)
             addActor(cube)
             _cubes.add(cube)
         }
@@ -50,6 +51,12 @@ abstract class Shape(
         if (!isVisible) return
         super.draw(batch, parentAlpha)
         super.drawChildren(batch, parentAlpha)
+    }
+
+    fun canMove(): Boolean {
+        val moveResults = cubes.map { it.canMove(fallDirection) }
+        val collided = moveResults.any { it is MoveResult.Collision }
+        return !collided
     }
 
     open fun move(direction: Directions): MoveResult {

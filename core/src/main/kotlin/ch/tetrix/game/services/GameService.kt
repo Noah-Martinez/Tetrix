@@ -21,7 +21,7 @@ object GameService {
     private const val INITIAL_FALL_INTERVAL_MS = 500f
     private const val MIN_FALL_INTERVAL_MS = 100f
     private const val FALL_INTERVAL_LEVE_DECREASE = 50f
-    private const val SQUARES_PER_LEVEL = 10
+    private const val SQUARES_PER_LEVEL = 5
     private const val FAST_FALL_FACTOR = 5
     private const val LOCK_DELAY_S = 0.5f
     private const val MAX_LOCK_DELAY_RESETS = 7
@@ -151,15 +151,20 @@ object GameService {
     }
 
     fun snapActiveShape() {
-        if (!isGameActive.value || activeShape == null) {
+        val lockDelay = this.lockDelay
+        val activeShape = this.activeShape
+        if (!isGameActive.value || activeShape == null || (lockDelay != null && lockDelay.isScheduled)) {
             return
         }
 
         gameTimer?.cancel()
+        var result: MoveResult?
+
         do {
-            val result = moveActiveShape(activeShape!!.fallDirection)
+            result = moveActiveShape(activeShape.fallDirection)
         } while (result is MoveResult.Success)
-        scheduleNextStep()
+
+        handleCollision(result as MoveResult.Collision, activeShape)
     }
 
     fun rotateActiveShapeClockwise() {
@@ -300,17 +305,17 @@ object GameService {
     /** used to move cubes from one shape to another (usually the rotor) */
     private fun attachActiveShapeToRotor() {
         lockDelay?.cancel()
+        val activeShape = activeShape
 
-        if (activeShape == null || rotor == null || gameStage == null) {
+        if (activeShape == null || activeShape.canMove() || rotor == null || gameStage == null) {
             return
         }
 
-        // TODO: game over when max rotor size is > floor(NUM_COLS / 2)
-        activeShape!!.transferCubesTo(rotor!!)
+        activeShape.transferCubesTo(rotor!!)
 
-        activeShape!!.remove()
+        activeShape.remove()
         _shapes.remove(activeShape)
-        activeShape = null
+        this.activeShape = null
 
         gameTimer?.cancel()
 

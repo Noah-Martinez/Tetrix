@@ -23,6 +23,7 @@ class Cube(
     var shape: Shape,
     context: Context,
     private val texture: Texture,
+    private val glow: Boolean = false,
 ): Actor() {
     private val modelBatch: ModelBatch = context.inject()
     private val environment: Environment = context.inject()
@@ -42,6 +43,9 @@ class Cube(
     init {
         modelInstance.materials.forEach { mat ->
             mat.set(TextureAttribute.createDiffuse(texture))
+            if (glow) {
+                mat.set(TextureAttribute.createEmissive(texture))
+            }
         }
     }
 
