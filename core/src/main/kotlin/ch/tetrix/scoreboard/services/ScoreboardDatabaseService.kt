@@ -3,11 +3,10 @@ package ch.tetrix.scoreboard.services
 import ch.tetrix.scoreboard.models.ScoreDto
 import ch.tetrix.scoreboard.models.ScoreEntity
 import ch.tetrix.scoreboard.repositories.ScoreboardRepository
+import ch.tetrix.shared.AppDataDir
 import ch.tetrix.shared.ScoreboardInitException
 import ch.tetrix.shared.ScoreboardLoadException
 import ch.tetrix.shared.ScoreboardSaveException
-import java.nio.file.Path
-import java.nio.file.Paths
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.SQLException
@@ -15,18 +14,16 @@ import java.sql.Statement
 import ktx.log.logger
 
 object ScoreboardDatabaseService : ScoreboardRepository {
-    private const val DB_FILE_NAME = "scoreboard.db"
-    private val PROJECT_ROOT: Path = Paths.get(System.getProperty("user.dir"))
-    private val DB_PATH: Path = PROJECT_ROOT.resolve(DB_FILE_NAME)
-    private val JDBC_URL = "jdbc:sqlite:${DB_PATH.toAbsolutePath()}"
+    private const val DEFAULT_FILE = "scoreboard.db"
+    private val DEFAULT_DIR = AppDataDir.resolve(appName = "Tetrix", company = "ch.abbts")
+    private val DEFAULT_PATH = DEFAULT_DIR.resolve(DEFAULT_FILE)
+    private val JDBC_URL = "jdbc:sqlite:${DEFAULT_PATH.toAbsolutePath()}"
 
     private lateinit var conn: Connection
     private var log = logger<ScoreboardDatabaseService>()
 
     override fun init(location: String) {
-        // only run idempotent statements, since the function is run everytime before connecting to the db
-
-        log.info { "Initializing database connection: $PROJECT_ROOT" }
+        log.info { "Initializing database connection: $DEFAULT_PATH" }
 
         try {
             val databaseConnection = DriverManager.getConnection(location.takeIf { it.isNotBlank() } ?: JDBC_URL)
@@ -63,10 +60,17 @@ object ScoreboardDatabaseService : ScoreboardRepository {
                 if (generatedKeys.next()) {
                     val newId = generatedKeys.getLong(1)
                     // Return a ScoreDto (id populated). Ranking is computed by getAllScores, so rank left as 0 here.
+                    // Special case: if this is the very first score, set rank to 1.
+                    val countSql = "SELECT COUNT(*) FROM scores"
+                    val countStmt = conn.prepareStatement(countSql)
+                    val countResult = countStmt.executeQuery()
+                    val scoreCount = if (countResult.next()) countResult.getInt(1) else 0
+
                     return ScoreDto(
                         id = newId,
                         username = scoreEntity.username,
                         score = scoreEntity.score,
+                        rank = if (scoreCount == 1) 1 else 0
                     )
                 } else {
                     throw ScoreboardSaveException("Couldn't retrieve the generated key from the db")
@@ -156,7 +160,6 @@ object ScoreboardDatabaseService : ScoreboardRepository {
             val scores = mutableListOf<ScoreDto>()
             while (result.next()) {
                 scores += ScoreDto(
-                    // The id column can be null for the player's transient score
                     id = result.getObject("id")?.let { (it as Number).toLong() },
                     username = result.getString("username"),
                     score = result.getInt("score"),

@@ -3,6 +3,7 @@ package ch.tetrix.scoreboard.services
 import ch.tetrix.scoreboard.models.ScoreDto
 import ch.tetrix.scoreboard.models.ScoreEntity
 import ch.tetrix.scoreboard.repositories.ScoreboardRepository
+import ch.tetrix.shared.AppDataDir
 import ch.tetrix.shared.ScoreboardInitException
 import ch.tetrix.shared.ScoreboardLoadException
 import ch.tetrix.shared.ScoreboardSaveException
@@ -11,25 +12,29 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
+import ktx.log.logger
 
 object ScoreboardCsvService: ScoreboardRepository {
-    private const val DEFAULT_CSV = "scoreboard.csv"
-    private val PROJECT_ROOT: Path = Paths.get(System.getProperty("user.dir"))
+    private const val DEFAULT_FILE = "scoreboard.csv"
+    private val DEFAULT_DIR = AppDataDir.resolve(appName = "Tetrix", company = "ch.abbts")
+    private val DEFAULT_PATH = DEFAULT_DIR.resolve(DEFAULT_FILE)
     private const val HEADER = "id,username,score"
 
     private lateinit var csvPath: Path
+    private var log = logger<ScoreboardCsvService>()
 
     override fun init(location: String) {
-        csvPath = Paths.get(location.takeIf { it.isNotBlank() } ?: PROJECT_ROOT.resolve(DEFAULT_CSV).toString())
+        csvPath = if (location.isNotBlank()) Paths.get(location) else DEFAULT_PATH
+
+        log.info { "Initializing csv file connection: $csvPath" }
 
         try {
-            csvPath.parent?.let { Files.createDirectories(it) }
-
+            Files.createDirectories(csvPath.parent)
             if (Files.notExists(csvPath)) {
-                Files.write(csvPath, listOf(HEADER), StandardOpenOption.CREATE)
+                Files.write(csvPath, listOf(HEADER))
             }
         } catch (ex: IOException) {
-            throw ScoreboardInitException("Initialisierung des CSV-Scoreboards fehlgeschlagen: $ex")
+            throw ScoreboardInitException("Failed to init CSV scoreboard: $ex")
         }
     }
 
@@ -91,16 +96,20 @@ object ScoreboardCsvService: ScoreboardRepository {
 
     override fun getGameOverScores(score: Int): List<ScoreDto> {
         try {
-            val allScores = getAllScores().toMutableList()
-            allScores.add(ScoreDto(score = score))
+            val existingScores = getAllScores()
+            val allScoresWithNew = (existingScores + ScoreDto(score = score))
+                .sortedByDescending { it.score }
+                .mapIndexed { index, dto ->
+                    dto.copy(rank = index + 1)
+                }
 
-            val playerIndex = allScores.indexOfFirst { it.id == null }
+            val playerIndex = allScoresWithNew.indexOfFirst { it.id == null }
 
             val windowStart = (playerIndex - 2).coerceAtLeast(0)
-            val windowEnd = (playerIndex + 2).coerceAtMost(allScores.lastIndex)
-            val playerContextScores = allScores.subList(windowStart, windowEnd + 1)
+            val windowEnd = (playerIndex + 2).coerceAtMost(allScoresWithNew.lastIndex)
+            val playerContextScores = allScoresWithNew.subList(windowStart, windowEnd + 1)
 
-            val topScore = allScores.first()
+            val topScore = allScoresWithNew.first() // This will now always be rank 1 if scores exist
             val resultList = mutableListOf(topScore)
             resultList.addAll(playerContextScores)
 
