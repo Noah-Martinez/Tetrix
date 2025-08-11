@@ -6,11 +6,7 @@ import com.badlogic.gdx.scenes.scene2d.Stage
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import com.badlogic.gdx.utils.Align
 import ktx.actors.onClick
-import ktx.scene2d.KTableWidget
-import ktx.scene2d.label
-import ktx.scene2d.table
-import ktx.scene2d.textButton
-import ktx.scene2d.textField
+import ktx.scene2d.*
 
 object GameOverViewBuilder {
     fun layout(
@@ -63,7 +59,7 @@ object GameOverViewBuilder {
         scores.forEach { score ->
             label(score.rank.toString())
             if (score.id == null) {
-                val userInput = textField {
+                val userInput = textField("", "nobg") {
                     messageText = score.username
                     setTextFieldListener { textField, c ->
                         if (c == '\r' || c == '\n') {
