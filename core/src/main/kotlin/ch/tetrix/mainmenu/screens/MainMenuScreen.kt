@@ -92,10 +92,12 @@ class MainMenuScreen(private val context: Context) : TxScreen() {
 
     private fun showOptionsMenu() {
         log.info { "Opening options..." }
+        game.removeScreen<MainMenuScreen>()
         game.setScreen<OptionMenuScreen>()
     }
 
     private fun showScoresMenu() {
+        game.removeScreen<MainMenuScreen>()
         game.setScreen<ScoreboardScreen>()
         log.info { "Opening scores..." }
     }
