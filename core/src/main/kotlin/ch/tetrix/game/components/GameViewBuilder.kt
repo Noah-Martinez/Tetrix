@@ -59,6 +59,7 @@ object GameViewBuilder {
     }
 
     fun highScoreComponent(context: Context): KTableWidget {
+        val gameService = context.inject<GameService>()
         val tableBackground = context.inject<ComponentBackground>().drawable
         val skin = context.inject<Skin>()
 
@@ -70,11 +71,12 @@ object GameViewBuilder {
                 .fillX()
                 .expandX()
 
-            add(valuePair(context, "HIGH SCORE", GameService.highScore))
+            add(valuePair(context, "HIGH SCORE", gameService.highScore))
         }
     }
 
     fun gameValuesComponent(context: Context): KTableWidget {
+        val gameService = context.inject<GameService>()
         val tableBackground = context.inject<ComponentBackground>().drawable
         val skin = context.inject<Skin>()
 
@@ -86,9 +88,9 @@ object GameViewBuilder {
                 .fillX()
                 .expandX()
 
-            add(valuePair(context, "SCORE", GameService.score)).row()
-            add(valuePair(context, "LEVEL", GameService.level)).row()
-            add(valuePair(context, "SQUARES", GameService.squares))
+            add(valuePair(context, "SCORE", gameService.score)).row()
+            add(valuePair(context, "LEVEL", gameService.level)).row()
+            add(valuePair(context, "SQUARES", gameService.squares))
         }
     }
 
@@ -109,9 +111,9 @@ object GameViewBuilder {
 
                 defaults().expand()
 
-                label(behaviorSignal.value.toString()) { cell ->
+                label(behaviorSignal.value.toString()) { _ ->
 
-                    behaviorSignal.add { signal, newValue ->
+                    behaviorSignal.add { _, newValue ->
                         setText(newValue.toString())
                     }
 

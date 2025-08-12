@@ -9,15 +9,18 @@ import ch.tetrix.game.models.GridPosition
 import ch.tetrix.game.models.MoveResult
 import ch.tetrix.game.services.GameService
 import com.badlogic.gdx.assets.AssetManager
+import com.badlogic.gdx.audio.Sound
+import kotlin.math.abs
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ktx.async.KtxAsync
 import ktx.inject.Context
-import kotlin.math.abs
 
 class RotorShape(
     context: Context,
-) : Shape(
+    val squareClearSound: Sound,
+    val tetrominoFallingAfterSquareClearSound: Sound,
+    ) : Shape(
     GridPosition(8, 27),
     arrayOf(
         GridPosition(0, 0),
@@ -30,7 +33,7 @@ class RotorShape(
         val cubesDestroyed: Int,
         val squaresDestroyed: Int,
     )
-
+    val gameService : GameService = context.inject()
     val maxCubeRadius
         get() = cubes.flatMap { listOf(abs(it.localPos.x), abs(it.localPos.y)) }.maxOrNull() ?: 0
 
@@ -70,6 +73,9 @@ class RotorShape(
                         it.remove()
                         cubesDestroyed++
                     }
+
+                    squareClearSound.play()
+
                     fullSquares++
                     consecutiveSquares++
                 }
@@ -141,6 +147,7 @@ class RotorShape(
                 }
             }
 
+            tetrominoFallingAfterSquareClearSound.play()
             delay(100)
             moveRadius++
         }
@@ -221,7 +228,7 @@ class RotorShape(
             else -> this // Should not happen
         }
 
-        if (cubePositions.contains(newPosition) || GameService.isOutOfBounds(newPosition + gridPos)) {
+        if (cubePositions.contains(newPosition) || gameService.isOutOfBounds(newPosition + gridPos)) {
             // cannot move to occupied space
             return this
         }
