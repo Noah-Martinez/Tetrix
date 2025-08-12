@@ -23,6 +23,7 @@ import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.scenes.scene2d.Stage
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import com.badlogic.gdx.utils.viewport.FitViewport
+import kotlin.math.max
 import ktx.inject.Context
 import ktx.inject.register
 import ktx.log.logger
@@ -31,12 +32,12 @@ import ktx.math.vec2
 import ktx.math.vec3
 import ktx.scene2d.KTableWidget
 import net.mgsx.gltf.scene3d.lights.DirectionalLightEx
-import kotlin.math.max
 
 class GameStage(
     val context: Context,
     batch: Batch,
 ) : Stage(FitViewport(GAME_WIDTH, GAME_HEIGHT), batch) {
+    private val gameService by lazy { context.inject<GameService>() }
     private val skin by lazy { context.inject<Skin>() }
     private val inputMultiplexer by lazy { context.inject<InputMultiplexer>() }
     private val componentBackground by lazy { context.inject<ComponentBackground>().drawable }
@@ -76,16 +77,16 @@ class GameStage(
         )
 
     private val inputController = GameInputController(config) { action ->
-        if (!GameService.isGameActive.value) return@GameInputController
+        if (!gameService.isGameActive.value) return@GameInputController
         when (action) {
-            GameInputController.Action.MoveUp -> GameService.enableFastFall(Directions.UP)
-            GameInputController.Action.MoveDown -> GameService.enableFastFall(Directions.DOWN)
-            GameInputController.Action.Snap -> GameService.snapActiveShape()
-            GameInputController.Action.RotLeft -> GameService.rotateActiveShapeCounterClockwise()
-            GameInputController.Action.RotRight -> GameService.rotateActiveShapeClockwise()
-            GameInputController.Action.RotorLeft -> GameService.rotateRotorCounterClockwise()
-            GameInputController.Action.RotorRight -> GameService.rotateRotorClockwise()
-            GameInputController.Action.FastFallOff -> GameService.disableFastFall()
+            GameInputController.Action.MoveUp -> gameService.enableFastFall(Directions.UP)
+            GameInputController.Action.MoveDown -> gameService.enableFastFall(Directions.DOWN)
+            GameInputController.Action.Snap -> gameService.snapActiveShape()
+            GameInputController.Action.RotLeft -> gameService.rotateActiveShapeCounterClockwise()
+            GameInputController.Action.RotRight -> gameService.rotateActiveShapeClockwise()
+            GameInputController.Action.RotorLeft -> gameService.rotateRotorCounterClockwise()
+            GameInputController.Action.RotorRight -> gameService.rotateRotorClockwise()
+            GameInputController.Action.FastFallOff -> gameService.disableFastFall()
         }
     }
 
@@ -100,8 +101,8 @@ class GameStage(
         left()
 
         defaults().uniform()
-        repeat(GameService.NUM_ROWS) {
-            repeat(GameService.NUM_COLS) { add() }
+        repeat(gameService.rows) {
+            repeat(gameService.cols) { add() }
             row()
             // TODO: show max rotor size
         }
@@ -140,10 +141,10 @@ class GameStage(
     }
 
     private fun handleKeyInputs(keycode: Int) {
-        if (!GameService.isGameActive.value) return
+        if (!gameService.isGameActive.value) return
         when (keycode) {
-            config.tetromino.moveLeft -> GameService.moveActiveShape(Directions.LEFT)
-            config.tetromino.moveRight -> GameService.moveActiveShape(Directions.RIGHT)
+            config.tetromino.moveLeft -> gameService.moveActiveShape(Directions.LEFT)
+            config.tetromino.moveRight -> gameService.moveActiveShape(Directions.RIGHT)
         }
     }
 
@@ -187,7 +188,7 @@ class GameStage(
 
     /** gets the coordinates of a cell in the grid from a grid position */
     fun gridToWorldPos(pos: GridPosition): Vector2 {
-        if (GameService.isOutOfBounds(pos)) {
+        if (gameService.isOutOfBounds(pos)) {
             error("position $pos out of bounds")
         }
         val cell = table.cells[(pos.y * table.columns) + pos.x]
@@ -200,7 +201,7 @@ class GameStage(
 
     /** gets the dimensions of a cell in the grid from a grid position */
     fun gridToWorldScale(pos: GridPosition): Vector2 {
-        if (GameService.isOutOfBounds(pos)) {
+        if (gameService.isOutOfBounds(pos)) {
             error("position $pos out of bounds")
         }
         val cell = table.cells[(pos.y * table.columns) + pos.x]

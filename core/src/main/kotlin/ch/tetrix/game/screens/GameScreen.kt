@@ -32,7 +32,7 @@ data class ValueBackground(val drawable: Drawable)
 class GameScreen(val context: Context) : TxScreen() {
     private val game by lazy { context.inject<Game>() }
     private val inputMultiplexer by lazy { context.inject<InputMultiplexer>() }
-
+    private val gameService by lazy { context.inject<GameService>() }
     private val batch = SpriteBatch()
 
     private val viewport by lazy { FitViewport(GAME_WIDTH, GAME_HEIGHT) }
@@ -61,31 +61,32 @@ class GameScreen(val context: Context) : TxScreen() {
 
     override fun show() {
         context.register {
+            bindSingleton<GameService>(GameService(context))
             bindSingleton(ComponentBackground(componentBackground))
             bindSingleton(ValueBackground(valueBackground))
         }
 
         stage.addActor(gameLayout)
         inputMultiplexer.addProcessor(stage)
-        GameService.startNewGame(context, gameStage)
+        gameService.startNewGame(gameStage)
     }
 
     override fun render(delta: Float) {
         super.render(delta)
 
-        if(GameService.isGameOver.value){
+        if(gameService.isGameOver.value){
             goToGameOverMenu()
         }
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
-            if(!GameService.isGamePaused.value){
+            if(!gameService.isGamePaused.value){
                 pauseGame()
             } else {
                 resumeGame()
             }
         }
 
-        if (!GameService.isGamePaused.value) {
+        if (!gameService.isGamePaused.value) {
             stage.act(delta)
             gameStage.act(delta)
         } else {
@@ -96,7 +97,7 @@ class GameScreen(val context: Context) : TxScreen() {
         stage.draw()
         gameStage.draw()
 
-        if(GameService.isGamePaused.value) {
+        if(gameService.isGamePaused.value) {
             pauseStage.viewport.apply()
             pauseStage.draw()
         }
@@ -113,7 +114,7 @@ class GameScreen(val context: Context) : TxScreen() {
         super.dispose()
         pauseStage.dispose()
         gameStage.dispose()
-        GameService.endGame()
+        gameService.endGame()
         context.apply {
             remove<GameService>()
             remove<ComponentBackground>()
@@ -131,7 +132,7 @@ class GameScreen(val context: Context) : TxScreen() {
     }
 
     private fun pauseGame() {
-        GameService.pauseGame()
+        gameService.pauseGame()
 
         pauseStage.addActor(pauseOverlay)
         inputMultiplexer.addProcessor(pauseStage)
@@ -141,7 +142,7 @@ class GameScreen(val context: Context) : TxScreen() {
         pauseStage.clear()
         inputMultiplexer.removeProcessor(pauseStage)
 
-        GameService.resumeGame()
+        gameService.resumeGame()
     }
 
     private fun goToMainMenu() {
@@ -151,6 +152,7 @@ class GameScreen(val context: Context) : TxScreen() {
 
     private fun goToGameOverMenu() {
         game.removeScreen<GameScreen>()
+        game.addScreen(GameOverScreen(context, gameService.score.value))
         game.setScreen<GameOverScreen>()
     }
 }

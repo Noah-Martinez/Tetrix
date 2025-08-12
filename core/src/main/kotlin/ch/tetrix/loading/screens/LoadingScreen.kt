@@ -4,9 +4,11 @@ import ch.tetrix.GAME_HEIGHT
 import ch.tetrix.GAME_WIDTH
 import ch.tetrix.Game
 import ch.tetrix.assets.AudioAssets
+import ch.tetrix.assets.MusicAssets
 import ch.tetrix.assets.TextureAssets
-import ch.tetrix.assets.load
 import ch.tetrix.assets.loadClamped
+import ch.tetrix.assets.loadMusic
+import ch.tetrix.assets.loadSound
 import ch.tetrix.loading.components.LoadingViewBuilder
 import ch.tetrix.mainmenu.screens.MainMenuScreen
 import ch.tetrix.shared.TxScreen
@@ -62,7 +64,8 @@ class LoadingScreen(context: Context) : TxScreen() {
     }
 
     private fun loadAssets() {
-        AudioAssets.entries.forEach { assets.load(it) }
+        AudioAssets.entries.forEach { assets.loadSound(it) }
+        MusicAssets.entries.forEach { assets.loadMusic(it) }
         TextureAssets.entries.forEach { assets.loadClamped(it) }
     }
 

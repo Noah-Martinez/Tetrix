@@ -1,5 +1,7 @@
 package ch.tetrix.game.services
 
+import ch.tetrix.assets.AudioAssets
+import ch.tetrix.assets.get
 import ch.tetrix.game.actors.Cube
 import ch.tetrix.game.actors.Shape
 import ch.tetrix.game.actors.shapeImplementations.RotorShape
@@ -10,31 +12,51 @@ import ch.tetrix.game.models.ShapeType
 import ch.tetrix.game.stages.GameStage
 import ch.tetrix.scoreboard.repositories.ScoreboardRepository
 import ch.tetrix.shared.BehaviorSignal
+import com.badlogic.gdx.assets.AssetManager
+import com.badlogic.gdx.audio.Sound
 import com.badlogic.gdx.utils.Timer
+import kotlin.math.max
 import ktx.inject.Context
 import ktx.log.logger
-import kotlin.math.max
 
-object GameService {
-    const val NUM_COLS: Int = 17
-    const val NUM_ROWS: Int = 36
-    private const val INITIAL_FALL_INTERVAL_MS = 500f
-    private const val MIN_FALL_INTERVAL_MS = 100f
-    private const val FALL_INTERVAL_LEVE_DECREASE = 50f
-    private const val SQUARES_PER_LEVEL = 5
-    private const val FAST_FALL_FACTOR = 5
-    private const val LOCK_DELAY_S = 0.5f
-    private const val MAX_LOCK_DELAY_RESETS = 7
+class GameService(private val context: Context) {
+    companion object {
+        private const val NUM_COLS: Int = 17
+        private const val NUM_ROWS: Int = 36
 
-    private val log = logger<GameService>()
+        private const val INITIAL_FALL_INTERVAL_MS = 500f
+        private const val MIN_FALL_INTERVAL_MS = 100f
+        private const val FALL_INTERVAL_LEVE_DECREASE = 50f
+        private const val SQUARES_PER_LEVEL = 5
+        private const val FAST_FALL_FACTOR = 5
+        private const val LOCK_DELAY_S = 0.5f
+        private const val MAX_LOCK_DELAY_RESETS = 7
 
-    private var context: Context? = null
-    private var gameStage: GameStage? = null
+        private val log = logger<GameService>()
+    }
+
+    val cols: Int
+        get() = NUM_COLS
+
+    val rows: Int
+        get() = NUM_ROWS
+
+    private lateinit var gameStage: GameStage
+    private var assets: AssetManager = context.inject<AssetManager>()
+
+    private lateinit var tetrominoRotateSound: Sound
+    private lateinit var tetrominoMoveSound: Sound
+    private lateinit var tetrominoLandedSound: Sound
+    private lateinit var tetrominoHardDropSound: Sound
+    private lateinit var tetrominoFallingAfterSquareClearSound: Sound
+    private lateinit var squareClearSound: Sound
+    private lateinit var rotorRotateSound: Sound
+    private lateinit var levelUpSound: Sound
+    private lateinit var gameOverSound: Sound
 
     /** actively controlled shape */
     private var activeShape: Shape? = null
-
-    private var rotor: RotorShape? = null
+    private lateinit var rotor: RotorShape
 
     private val _shapes = arrayListOf<Shape>()
     /** map of positions -> cubes, to find occupied positions */
@@ -63,31 +85,47 @@ object GameService {
     private var lockDelayResets = 0
 
     init {
-        reset()
+        setGamesound()
     }
 
-    fun startNewGame(context: Context, gameStage: GameStage) {
+
+    fun startNewGame(gameStage: GameStage) {
         log.info { "Starting new game" }
         reset()
-        this.context = context
         this.gameStage = gameStage
         val scoreboardRepo = context.inject<ScoreboardRepository>()
         highScore.dispatch(scoreboardRepo.getHighScore()?.score ?: 0)
-        setRotor(RotorShape(context))
+        setRotor(RotorShape(context, squareClearSound, tetrominoFallingAfterSquareClearSound))
         isGameActive.dispatch(true)
         isGameOver.dispatch(false)
         isGamePaused.dispatch(false)
         gameStep()
     }
 
+    private fun setGamesound() {
+        tetrominoRotateSound = assets[AudioAssets.TETROMINO_ROTATE]
+        tetrominoMoveSound = assets[AudioAssets.TETROMINO_MOVE]
+        tetrominoLandedSound = assets[AudioAssets.TETROMINO_LANDED]
+        tetrominoHardDropSound = assets[AudioAssets.TETROMINO_HARD_DROP]
+        tetrominoFallingAfterSquareClearSound = assets[AudioAssets.TETROMINO_FALLING_AFTER_SQUARE_CLEAR]
+        squareClearSound = assets[AudioAssets.SQUARE_CLEAR]
+        rotorRotateSound = assets[AudioAssets.ROTOR_ROTATE]
+        levelUpSound = assets[AudioAssets.LEVEL_UP]
+        gameOverSound = assets[AudioAssets.GAME_OVER]
+    }
+
     /**
      * Resets all game values to initial state
      */
     private fun reset() {
-        context = null
-        gameStage = null
-        rotor = null
-        activeShape = null
+        if(::gameStage.isInitialized) {
+            gameStage.dispose()
+        }
+        if(::rotor.isInitialized) {
+            rotor.remove()
+        }
+        activeShape?.remove()
+
         isFastFallActive = false
         _shapes.clear()
         gameTimer?.cancel()
@@ -124,6 +162,7 @@ object GameService {
 
     fun endGame() {
         log.info { "Game ended. Final score: ${score.value}" }
+        gameOverSound.play()
         isGameActive.dispatch(false)
         isGameOver.dispatch(true)
         isGamePaused.dispatch(false)
@@ -164,6 +203,7 @@ object GameService {
             result = moveActiveShape(activeShape.fallDirection)
         } while (result is MoveResult.Success)
 
+        tetrominoHardDropSound.play()
         handleCollision(result as MoveResult.Collision, activeShape)
     }
 
@@ -174,6 +214,7 @@ object GameService {
 
         val success = activeShape!!.rotateClockwise()
         if (success) {
+            tetrominoRotateSound.play()
             handleLockDelayReset()
         }
     }
@@ -185,34 +226,30 @@ object GameService {
 
         val success = activeShape!!.rotateCounterClockwise()
         if (success) {
+            tetrominoRotateSound.play()
             handleLockDelayReset()
         }
     }
 
     fun rotateRotorClockwise() {
-        if (!isGameActive.value || rotor == null) {
+        if (!isGameActive.value) {
             return
         }
 
-        rotor!!.rotateClockwise()
+        rotorRotateSound.play()
+        rotor.rotateClockwise()
     }
 
     fun rotateRotorCounterClockwise() {
-        if (!isGameActive.value || rotor == null) {
+        if (!isGameActive.value) {
             return
         }
 
-        rotor!!.rotateCounterClockwise()
+        rotorRotateSound.play()
+        rotor.rotateCounterClockwise()
     }
 
     private fun gameStep() {
-        val context = context
-        val gameComponent = gameStage
-
-        if (context == null || gameComponent == null) {
-            throw Exception("GameComponent or context is null, game can't run without them.")
-        }
-
         if (!isGameActive.value) {
             return
         }
@@ -220,7 +257,7 @@ object GameService {
         var activeShape = activeShape
         if (activeShape == null) {
             setActiveShape(ShapeType.randomShape(context))
-            activeShape = GameService.activeShape!!
+            activeShape = this.activeShape!!
             log.debug { "New active shape: ${activeShape.javaClass.simpleName}" }
         }
 
@@ -285,9 +322,6 @@ object GameService {
 
     private fun <T: Shape> addShape(shape: T): T{
         val gameComponent = gameStage
-        if (gameComponent == null) {
-            throw Exception("GameComponent is null, shape can't be added.")
-        }
 
         val canPlaceShape = shape.cubes.map { it.gridPos }.all { !cubePositions.containsKey(it) }
 
@@ -307,19 +341,19 @@ object GameService {
         lockDelay?.cancel()
         val activeShape = activeShape
 
-        if (activeShape == null || activeShape.canMove() || rotor == null || gameStage == null) {
+        if (activeShape == null || activeShape.canMove()) {
             return
         }
 
-        activeShape.transferCubesTo(rotor!!)
-
+        activeShape.transferCubesTo(rotor)
+        tetrominoLandedSound.play()
         activeShape.remove()
         _shapes.remove(activeShape)
         this.activeShape = null
 
         gameTimer?.cancel()
 
-        rotor!!.removeSquaresAsync { result ->
+        rotor.removeSquaresAsync { result ->
             log.info { "Shape attached to rotor. Cubes: ${result.cubesDestroyed}, Squares: ${result.squaresDestroyed}" }
             updateScore(result.cubesDestroyed * result.squaresDestroyed)
             squares.dispatch(squares.value + result.squaresDestroyed)
@@ -370,6 +404,7 @@ object GameService {
         val actualLevel = Math.floorDiv(totalSquares, SQUARES_PER_LEVEL)
 
         if (currentLevel != actualLevel) {
+            levelUpSound.play()
             level.dispatch(actualLevel)
             log.info { "Level up! level: $currentLevel -> $actualLevel squares: $totalSquares" }
             updateFallSpeed()

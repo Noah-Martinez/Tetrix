@@ -25,6 +25,7 @@ class Cube(
     private val texture: Texture,
     private val glow: Boolean = false,
 ): Actor() {
+    private val gameService : GameService = context.inject()
     private val modelBatch: ModelBatch = context.inject()
     private val environment: Environment = context.inject()
 
@@ -95,11 +96,11 @@ class Cube(
     }
 
     private fun checkCollision(gridPos: GridPosition): MoveResult {
-        if (GameService.isOutOfBounds(gridPos)) {
+        if (gameService.isOutOfBounds(gridPos)) {
             return MoveResult.Collision(null)
         }
 
-        val nextPosCube = GameService.cubePositions[gridPos]
+        val nextPosCube = gameService.cubePositions[gridPos]
         if (nextPosCube != null && nextPosCube !in shape.cubes) {
             return MoveResult.Collision(nextPosCube.shape)
         }

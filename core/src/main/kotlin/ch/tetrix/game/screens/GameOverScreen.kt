@@ -5,7 +5,6 @@ import ch.tetrix.GAME_WIDTH
 import ch.tetrix.Game
 import ch.tetrix.game.actions.GameOverAction
 import ch.tetrix.game.components.GameOverViewBuilder
-import ch.tetrix.game.services.GameService
 import ch.tetrix.mainmenu.screens.MainMenuScreen
 import ch.tetrix.scoreboard.models.ScoreDto
 import ch.tetrix.scoreboard.repositories.ScoreboardRepository
@@ -19,7 +18,7 @@ import ktx.log.logger
 import ktx.scene2d.KTableWidget
 import ktx.scene2d.Scene2DSkin
 
-class GameOverScreen(val context: Context) : TxScreen() {
+class GameOverScreen(val context: Context, val score: Int) : TxScreen() {
     private val batch by lazy { context.inject<Batch>() }
     private val game by lazy { context.inject<Game>() }
     private val scoreRepository by lazy { context.inject<ScoreboardRepository>() }
@@ -31,7 +30,7 @@ class GameOverScreen(val context: Context) : TxScreen() {
     private val gameOverMenuLayout: KTableWidget by lazy {
         GameOverViewBuilder.layout(
             skin = Scene2DSkin.defaultSkin,
-            scoreRepository.getGameOverScores(GameService.score.value),
+            scoreRepository.getGameOverScores(score),
             stage =  stage,
             onGameOverAction = ::handleGameOverAction
         )

@@ -13,6 +13,7 @@ abstract class TwoOrientationShape(
     context: Context,
     texture: Texture
 ) : Shape(gridPos, cubePositions, context, texture) {
+    private val gameService : GameService = context.inject()
     // NOTE: only has 2 rotation states not 4 like the default shape
     private var orientation = Orientation.Horizontal
 
@@ -52,8 +53,8 @@ abstract class TwoOrientationShape(
     private fun doRotate(endPositions: Array<GridPosition>): Boolean {
         val canRotate = endPositions.all {
             val endPos = gridPos + it
-            val cubeAtPos = GameService.cubePositions[endPos]
-            (cubeAtPos == null || cubeAtPos.shape == this) && !GameService.isOutOfBounds(endPos)
+            val cubeAtPos = gameService.cubePositions[endPos]
+            (cubeAtPos == null || cubeAtPos.shape == this) && !gameService.isOutOfBounds(endPos)
         }
 
         if (!canRotate) {
