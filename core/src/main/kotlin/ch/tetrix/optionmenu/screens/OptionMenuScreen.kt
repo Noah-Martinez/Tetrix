@@ -19,7 +19,8 @@ import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.scenes.scene2d.Stage
 import com.badlogic.gdx.scenes.scene2d.ui.Label
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
-import com.badlogic.gdx.utils.viewport.FitViewport
+import com.badlogic.gdx.scenes.scene2d.ui.Slider
+import com.badlogic.gdx.utils.viewport.ExtendViewport
 import ktx.inject.Context
 import ktx.log.logger
 import ktx.scene2d.KTableWidget
@@ -30,7 +31,7 @@ class OptionMenuScreen(context: Context) : TxScreen() {
     private val game by lazy { context.inject<Game>() }
     private val inputMultiplexer by lazy { context.inject<InputMultiplexer>() }
 
-    private val viewport by lazy { FitViewport(GAME_WIDTH, GAME_HEIGHT) }
+    private val viewport by lazy { ExtendViewport(GAME_WIDTH, GAME_HEIGHT) }
     override val stage by lazy { Stage(viewport, batch) }
 
     private var optionMenuLayout = createOptionMenuLayout(Scene2DSkin.defaultSkin)
@@ -73,7 +74,8 @@ class OptionMenuScreen(context: Context) : TxScreen() {
         when (action) {
             is OptionMenuAction.MainMenu -> goToMainMenu()
             is OptionMenuAction.Reset -> onResetConfig()
-            is OptionMenuAction.KeyBindingSelected -> startKeyRebinding(action.labelToUpdate, action.preferenceKey)
+            is OptionMenuAction.KeyBindingSelected -> startKeyRebinding(action.label, action.preferenceKey)
+            is OptionMenuAction.AudioVolumeChanged -> startAudioChange(action.slider, action.preferenceKey)
         }
     }
 
@@ -83,7 +85,6 @@ class OptionMenuScreen(context: Context) : TxScreen() {
         optionMenuLayout = createOptionMenuLayout(Scene2DSkin.defaultSkin) // Recreate the layout
         stage.addActor(optionMenuLayout) // Add the new layout
     }
-
 
     private fun startKeyRebinding(label: Label, preferenceKey: String) {
         labelToUpdate = label
@@ -129,7 +130,12 @@ class OptionMenuScreen(context: Context) : TxScreen() {
         })
     }
 
-    private fun goToMainMenu() {
+    private fun startAudioChange(slider: Slider, preferenceKey: String) {
+        ConfigManager.audioChanged(preferenceKey, slider.value)
+    }
+
+
+        private fun goToMainMenu() {
         game.removeScreen<OptionMenuScreen>()
         game.setScreen<MainMenuScreen>()
     }

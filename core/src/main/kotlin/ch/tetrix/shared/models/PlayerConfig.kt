@@ -4,7 +4,8 @@ import com.badlogic.gdx.Input
 
 data class PlayerConfig(
     val tetromino: TetrominoControls = TetrominoControls(),
-    val rotor: RotorControls = RotorControls()
+    val rotor: RotorControls = RotorControls(),
+    val audio: AudioControls = AudioControls()
 )
 
 data class TetrominoControls(
@@ -34,5 +35,15 @@ data class RotorControls(
     companion object {
         const val KEY_ROTATE_LEFT = "rotor.rotateLeft"
         const val KEY_ROTATE_RIGHT = "rotor.rotateRight"
+    }
+}
+
+data class AudioControls(
+    var musicVolume: Float = 0.05f,
+    var soundVolume: Float = 0.1f
+) {
+    companion object {
+        const val MUSIC = "volume.music"
+        const val SOUND = "volume.sound"
     }
 }

@@ -10,6 +10,7 @@ import ch.tetrix.mainmenu.actions.MainMenuAction
 import ch.tetrix.mainmenu.components.MainMenuViewBuilder
 import ch.tetrix.optionmenu.screens.OptionMenuScreen
 import ch.tetrix.scoreboard.screens.ScoreboardScreen
+import ch.tetrix.shared.ConfigManager
 import ch.tetrix.shared.TxScreen
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.InputMultiplexer
@@ -29,6 +30,7 @@ class MainMenuScreen(private val context: Context) : TxScreen() {
     private val game by lazy { context.inject<Game>() }
     private val inputMultiplexer by lazy { context.inject<InputMultiplexer>() }
     private val assets by lazy { context.inject<AssetManager>() }
+    private val config by lazy { ConfigManager.playerConfig }
 
     private val viewport by lazy { FitViewport(GAME_WIDTH, GAME_HEIGHT) }
     override val stage by lazy { Stage(viewport, batch) }
@@ -36,7 +38,7 @@ class MainMenuScreen(private val context: Context) : TxScreen() {
     private val mainMenuLayout by lazy { createMainMenuLayout(Scene2DSkin.defaultSkin) }
     private val mainMenuMusic: Music = assets[MusicAssets.MAIN_MENU].apply {
         isLooping = true
-        volume = 0.6f
+        volume = config.audio.musicVolume
     }
 
     companion object {
