@@ -12,6 +12,7 @@ import ch.tetrix.game.models.ShapeType
 import ch.tetrix.game.stages.GameStage
 import ch.tetrix.scoreboard.repositories.ScoreboardRepository
 import ch.tetrix.shared.BehaviorSignal
+import ch.tetrix.shared.ConfigManager
 import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.audio.Sound
 import com.badlogic.gdx.utils.Timer
@@ -43,6 +44,7 @@ class GameService(private val context: Context) {
 
     private lateinit var gameStage: GameStage
     private var assets: AssetManager = context.inject<AssetManager>()
+    private val config by lazy { ConfigManager.playerConfig }
 
     private lateinit var tetrominoRotateSound: Sound
     private lateinit var tetrominoMoveSound: Sound
@@ -162,7 +164,7 @@ class GameService(private val context: Context) {
 
     fun endGame() {
         log.info { "Game ended. Final score: ${score.value}" }
-        gameOverSound.play()
+        gameOverSound.play(config.audio.soundVolume)
         isGameActive.dispatch(false)
         isGameOver.dispatch(true)
         isGamePaused.dispatch(false)
@@ -203,7 +205,7 @@ class GameService(private val context: Context) {
             result = moveActiveShape(activeShape.fallDirection)
         } while (result is MoveResult.Success)
 
-        tetrominoHardDropSound.play()
+        tetrominoHardDropSound.play(config.audio.soundVolume)
         handleCollision(result as MoveResult.Collision, activeShape)
     }
 
@@ -214,7 +216,7 @@ class GameService(private val context: Context) {
 
         val success = activeShape!!.rotateClockwise()
         if (success) {
-            tetrominoRotateSound.play()
+            tetrominoRotateSound.play(config.audio.soundVolume)
             handleLockDelayReset()
         }
     }
@@ -226,7 +228,7 @@ class GameService(private val context: Context) {
 
         val success = activeShape!!.rotateCounterClockwise()
         if (success) {
-            tetrominoRotateSound.play()
+            tetrominoRotateSound.play(config.audio.soundVolume)
             handleLockDelayReset()
         }
     }
@@ -236,7 +238,7 @@ class GameService(private val context: Context) {
             return
         }
 
-        rotorRotateSound.play()
+        rotorRotateSound.play(config.audio.soundVolume)
         rotor.rotateClockwise()
     }
 
@@ -245,7 +247,7 @@ class GameService(private val context: Context) {
             return
         }
 
-        rotorRotateSound.play()
+        rotorRotateSound.play(config.audio.soundVolume)
         rotor.rotateCounterClockwise()
     }
 
@@ -346,7 +348,7 @@ class GameService(private val context: Context) {
         }
 
         activeShape.transferCubesTo(rotor)
-        tetrominoLandedSound.play()
+        tetrominoLandedSound.play(config.audio.soundVolume)
         activeShape.remove()
         _shapes.remove(activeShape)
         this.activeShape = null
@@ -404,7 +406,7 @@ class GameService(private val context: Context) {
         val actualLevel = Math.floorDiv(totalSquares, SQUARES_PER_LEVEL)
 
         if (currentLevel != actualLevel) {
-            levelUpSound.play()
+            levelUpSound.play(config.audio.soundVolume)
             level.dispatch(actualLevel)
             log.info { "Level up! level: $currentLevel -> $actualLevel squares: $totalSquares" }
             updateFallSpeed()

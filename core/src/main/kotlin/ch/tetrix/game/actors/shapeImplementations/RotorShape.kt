@@ -8,6 +8,8 @@ import ch.tetrix.game.models.Directions
 import ch.tetrix.game.models.GridPosition
 import ch.tetrix.game.models.MoveResult
 import ch.tetrix.game.services.GameService
+import ch.tetrix.shared.ConfigManager
+import ch.tetrix.shared.models.PlayerConfig
 import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.audio.Sound
 import kotlin.math.abs
@@ -34,6 +36,7 @@ class RotorShape(
         val squaresDestroyed: Int,
     )
     val gameService : GameService = context.inject()
+    val config: PlayerConfig = ConfigManager.playerConfig
     val maxCubeRadius
         get() = cubes.flatMap { listOf(abs(it.localPos.x), abs(it.localPos.y)) }.maxOrNull() ?: 0
 
@@ -74,7 +77,7 @@ class RotorShape(
                         cubesDestroyed++
                     }
 
-                    squareClearSound.play()
+                    squareClearSound.play(config.audio.soundVolume)
 
                     fullSquares++
                     consecutiveSquares++
@@ -147,7 +150,7 @@ class RotorShape(
                 }
             }
 
-            tetrominoFallingAfterSquareClearSound.play()
+            tetrominoFallingAfterSquareClearSound.play(config.audio.soundVolume)
             delay(100)
             moveRadius++
         }
