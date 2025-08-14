@@ -8,11 +8,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Value
 import com.badlogic.gdx.utils.Align
 import ktx.actors.onClick
 import ktx.inject.Context
-import ktx.scene2d.KScrollPane
-import ktx.scene2d.KTableWidget
-import ktx.scene2d.label
-import ktx.scene2d.scrollPane
-import ktx.scene2d.textButton
+import ktx.scene2d.*
 
 object ScoreboardViewBuilder {
     fun layout(context: Context, onBack: () -> Unit): KTableWidget {
@@ -28,6 +24,7 @@ object ScoreboardViewBuilder {
             textButton("MAIN MENU") {
                 it.colspan(3)
                 it.uniform()
+                pad(8f)
                 onClick { onBack() }
             }
         }
