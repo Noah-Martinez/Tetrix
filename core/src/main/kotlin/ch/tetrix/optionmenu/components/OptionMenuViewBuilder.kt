@@ -14,12 +14,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.Drawable
 import com.badlogic.gdx.utils.Align
 import ktx.actors.onChange
 import ktx.actors.onClick
-import ktx.scene2d.KTableWidget
-import ktx.scene2d.container
-import ktx.scene2d.label
-import ktx.scene2d.scrollPane
-import ktx.scene2d.slider
-import ktx.scene2d.textButton
+import ktx.scene2d.*
 
 object OptionMenuViewBuilder {
     fun layout(
@@ -52,7 +47,10 @@ object OptionMenuViewBuilder {
 
 
             row().expand()
-            textButton("MAIN MENU").onClick { onMenuAction(OptionMenuAction.MainMenu) }
+            textButton("MAIN MENU") {
+                onClick { onMenuAction(OptionMenuAction.MainMenu) }
+                pad(8f)
+            }
         }
     }
 
@@ -128,7 +126,10 @@ object OptionMenuViewBuilder {
             row().pad(16f).spaceTop(8f)
             container {
                 align(Align.right)
-                textButton("RESET").onClick { onMenuAction(OptionMenuAction.Reset) }
+                textButton("RESET") {
+                    pad(8f)
+                    onClick { onMenuAction(OptionMenuAction.Reset) }
+                }
             }.cell(colspan = 2)
         }
     }

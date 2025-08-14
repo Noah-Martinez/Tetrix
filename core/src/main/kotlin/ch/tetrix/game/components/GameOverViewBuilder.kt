@@ -44,6 +44,7 @@ object GameOverViewBuilder {
 
             // "MAIN MENU" Button
             textButton("MAIN MENU") {
+                pad(8f)
                 onClick {
                     onGameOverAction(GameOverAction.MainMenu)
                 }
