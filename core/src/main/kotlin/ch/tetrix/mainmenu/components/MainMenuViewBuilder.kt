@@ -11,11 +11,12 @@ import ktx.scene2d.textButton
 object MainMenuViewBuilder {
     fun layout(
         skin: Skin,
-        onMenuAction: (MainMenuAction) -> Unit
+        onMenuAction: (MainMenuAction) -> Unit,
+        highScore: Int
     ) : KTableWidget {
         val mainMenuComponent = menuComponent(skin, onMenuAction)
 
-        val highScoreComponent = highScoreComponent(skin, 123456789)
+        val highScoreComponent = highScoreComponent(skin, highScore)
 
         return KTableWidget(skin).apply {
             setFillParent(true)
