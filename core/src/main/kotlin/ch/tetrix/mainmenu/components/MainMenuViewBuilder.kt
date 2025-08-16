@@ -59,8 +59,6 @@ object MainMenuViewBuilder {
                 row()
                 textButton("SCORES").onClick { onMenuAction(MainMenuAction.Scores) }
                 row()
-                textButton("CREDITS").onClick { onMenuAction(MainMenuAction.Credits) }
-                row()
                 textButton("EXIT").onClick { onMenuAction(MainMenuAction.ExitGame) }
             }
         }

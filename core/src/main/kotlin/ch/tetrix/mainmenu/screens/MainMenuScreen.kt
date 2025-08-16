@@ -84,7 +84,6 @@ class MainMenuScreen(private val context: Context) : TxScreen() {
             MainMenuAction.StartGame -> startGame()
             MainMenuAction.Options -> showOptionsMenu()
             MainMenuAction.Scores -> showScoresMenu()
-            MainMenuAction.Credits -> showCreditsMenu()
             MainMenuAction.ExitGame -> exitGame()
         }
     }
@@ -105,11 +104,6 @@ class MainMenuScreen(private val context: Context) : TxScreen() {
         game.removeScreen<MainMenuScreen>()
         game.setScreen<ScoreboardScreen>()
         log.info { "Opening scores..." }
-    }
-
-    private fun showCreditsMenu() {
-        log.info { "Opening credits..." }
-        // TODO: Show credits screen
     }
 
     private fun exitGame() {
