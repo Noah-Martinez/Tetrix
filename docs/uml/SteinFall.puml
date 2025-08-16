@@ -1,21 +1,25 @@
 @startuml
 hide footbox
-title Brick Move
+title Eingabe & Bewegung (core)
 
-participant GameField as GF
-participant CubeShape as CS
+participant GameStage as GST
+participant GameService as Service
+participant Shape as Shape
 collections Cubes as C
 
-activate GF
-loop
-    GF -> CS : move()
-    activate CS
-    CS -> C : canMove()
+activate GST
+loop while (input)
+    GST -> Service : move*/rotate*
+    activate Service
+    Service -> Shape : canMove()/apply()
+    activate Shape
+    Shape -> C : checkCollisions()
     activate C
-    C --> CS : true
+    C --> Shape : ok
     deactivate C
-    CS -> CS : updatePos()
-    CS --> GF : true
-    deactivate CS
+    Shape --> Service : updated
+    deactivate Shape
+    Service --> GST : success
+    deactivate Service
 end
 @enduml
