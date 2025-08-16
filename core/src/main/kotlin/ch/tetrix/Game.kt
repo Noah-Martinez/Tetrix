@@ -6,7 +6,6 @@ import ch.tetrix.loading.screens.LoadingScreen
 import ch.tetrix.scoreboard.repositories.ScoreboardRepository
 import ch.tetrix.scoreboard.services.ScoreboardService
 import ch.tetrix.shared.TxScreen
-import com.badlogic.ashley.core.PooledEngine
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.InputMultiplexer
 import com.badlogic.gdx.assets.AssetManager
@@ -52,7 +51,6 @@ class Game : KtxGame<TxScreen>() {
             bindSingleton<Game>(this@Game)
             bindSingleton<Batch>(batch)
             bindSingleton<AssetManager>(assets)
-            bindSingleton<PooledEngine>(PooledEngine())
             bindSingleton<OrthographicCamera>(OrthographicCamera().apply {
                 setToOrtho(true)
             })
@@ -102,7 +100,6 @@ class Game : KtxGame<TxScreen>() {
 
     override fun dispose() {
         super.dispose()
-        log.debug { "Entities in engine: ${context.inject<PooledEngine>().entities.size()}" }
         context.remove<Game>() // prevent self call
         context.dispose()
     }

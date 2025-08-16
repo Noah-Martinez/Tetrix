@@ -6,7 +6,6 @@ import ch.tetrix.game.GameInputController
 import ch.tetrix.game.actors.Cube.Companion.MODEL_DEPTH
 import ch.tetrix.game.models.Directions
 import ch.tetrix.game.models.GridPosition
-import ch.tetrix.game.screens.ComponentBackground
 import ch.tetrix.game.services.GameService
 import ch.tetrix.shared.ConfigManager
 import ch.tetrix.shared.KeyHoldConfig
@@ -23,7 +22,6 @@ import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.scenes.scene2d.Stage
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import com.badlogic.gdx.utils.viewport.FitViewport
-import kotlin.math.max
 import ktx.inject.Context
 import ktx.inject.register
 import ktx.log.logger
@@ -32,6 +30,7 @@ import ktx.math.vec2
 import ktx.math.vec3
 import ktx.scene2d.KTableWidget
 import net.mgsx.gltf.scene3d.lights.DirectionalLightEx
+import kotlin.math.max
 
 class GameStage(
     val context: Context,
@@ -40,7 +39,7 @@ class GameStage(
     private val gameService by lazy { context.inject<GameService>() }
     private val skin by lazy { context.inject<Skin>() }
     private val inputMultiplexer by lazy { context.inject<InputMultiplexer>() }
-    private val componentBackground by lazy { context.inject<ComponentBackground>().drawable }
+
     private val config by lazy { ConfigManager.playerConfig }
 
     private val modelBatch = ModelBatch()
@@ -96,7 +95,9 @@ class GameStage(
 
     var tableSizeSet = false
     val table = KTableWidget(skin).apply {
-        setBackground(componentBackground)
+
+        val background = skin.getDrawable("game-background")
+        setBackground(background)
         top()
         left()
 
