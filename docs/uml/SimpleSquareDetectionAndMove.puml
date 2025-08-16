@@ -1,0 +1,29 @@
+@startuml
+start
+
+:Bestimme maxRadius;
+
+repeat
+    :Prüfe Square im aktuellen Radius;
+    if (Square vollständig?) then (nein)
+      if (Wurden Squares (consecutiveSquares) entfernt?) then (ja)
+      group  #lightGray "Einrücken von Cubes"
+            repeat
+                :Bewege Cubes des Radius
+                um (consecutiveSquares) Schritte nach innen;
+                :Nächster Radius;
+            repeat while  (Radius <= maxRadius) is (ja) not (nein)
+            :Radius um (consecutiveSquares) verringern;
+            :(consecutiveSquares) auf 0 setzen;
+        end group
+      else (nein)
+      endif
+    else (ja)
+      :Entferne Cubes;
+      :Zähle zerstörte Squares (consecutiveSquares);
+    endif
+      :Nächster Radius;
+repeat while (Radius <= maxRadius) is (ja) not (nein)
+
+stop
+@enduml

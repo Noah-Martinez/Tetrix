@@ -1,0 +1,24 @@
+@startuml
+start
+
+:Liste aller Cubes auf (Radius) ermitteln;
+:Sortiere Cubes im Uhrzeigersinn
+mit Ecken zuerst;
+
+repeat
+  :Wähle nächsten Cube;
+  repeat
+    :Berechne Zielposition in Richtung Zentrum
+(gerade oder diagonal, abhängig von Position);
+    if (Zielposition frei und im Spielfeld?) then (nein)
+      :Bewegung für diesen Cube beenden;
+      break
+    else (ja)
+      :Bewege Cube um 1 Schritt nach innen;
+    endif
+  repeat while (Schritte < max Schrittzahl?) is (ja) not (nein)
+repeat while (weitere Cubes im Perimeter?) is (ja) not (nein)
+
+:Zum nächsten äusseren Perimeter wechseln;
+stop
+@enduml
