@@ -30,7 +30,8 @@ class GameOverScreen(val context: Context, val score: Int) : TxScreen() {
     private val gameOverMenuLayout: KTableWidget by lazy {
         GameOverViewBuilder.layout(
             skin = Scene2DSkin.defaultSkin,
-            scoreRepository.getGameOverScores(score),
+            userScore = score,
+            scores = scoreRepository.getGameOverScores(score),
             stage =  stage,
             onGameOverAction = ::handleGameOverAction
         )
@@ -65,7 +66,6 @@ class GameOverScreen(val context: Context, val score: Int) : TxScreen() {
     private fun handleGameOverAction(action: GameOverAction) {
         when (action) {
             is GameOverAction.UsernameConfirmation -> onUsernameConfirmation(action.score)
-            is GameOverAction.MainMenu -> goToMainMenu()
         }
     }
 

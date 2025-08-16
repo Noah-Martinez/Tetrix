@@ -20,6 +20,7 @@ import kotlin.math.max
 import ktx.inject.Context
 import ktx.log.logger
 
+// TODO: visualize where shapes would end up when dropped
 class GameService(private val context: Context) {
     companion object {
         private const val NUM_COLS: Int = 17
