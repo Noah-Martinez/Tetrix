@@ -12,11 +12,11 @@ import ch.tetrix.shared.ConfigManager
 import ch.tetrix.shared.models.PlayerConfig
 import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.audio.Sound
-import kotlin.math.abs
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ktx.async.KtxAsync
 import ktx.inject.Context
+import kotlin.math.abs
 
 class RotorShape(
     context: Context,
@@ -75,6 +75,7 @@ class RotorShape(
                         _cubes.remove(it)
                         it.remove()
                         cubesDestroyed++
+                        delay(10)
                     }
 
                     squareClearSound.play(config.audio.soundVolume)
@@ -83,7 +84,7 @@ class RotorShape(
                     consecutiveSquares++
                 }
                 else if (consecutiveSquares > 0) {
-                    delay(500)
+                    delay(200)
                     moveCubesIn(radius, consecutiveSquares)
                     radius -= consecutiveSquares
                     consecutiveSquares = 0
@@ -120,7 +121,6 @@ class RotorShape(
 
         return perimeterPositions
     }
-
     private suspend fun moveCubesIn(radius: Int, stepCount: Int) {
         log.info { "Starting to move in cubes from radius $radius" }
         var moveRadius = radius
