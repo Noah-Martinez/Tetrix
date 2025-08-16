@@ -1,13 +1,16 @@
 @startuml
-title Aktivitätsdiagramm: Game Over Check
+title Aktivität: Game Over (core)
 
 start
-repeat :GameField act();
-    :activeShape.move();
-    backward :GameField.render();
+repeat :GameStage act();
+    :GameService.step();
+    backward :GameStage.draw();
     label initPoint
-repeat while (successful move & not out of bounds) is (yes)
+repeat while (not game over) is (yes)
 ->no;
+:GameOverScreen.show();
+:ScoreboardRepository.addScore();
+:ScoreboardRepository.getGameOverScores();
 :GameOver.show();
 :ScoringService.saveScore();
 :ScoringService.getTopTen();

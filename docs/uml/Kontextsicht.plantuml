@@ -1,22 +1,22 @@
 @startuml
 left to right direction
 
-title Kontextsicht: Tetrix
+title Kontextsicht: Tetrix (core)
 
 actor Spieler as Player
 
 rectangle "Benutzer Gerät" as Device {
-    rectangle "LibKtx\n(Kotlin Desktop App)" as App {
+    rectangle "LibGDX/KTX\n(Kotlin Desktop App)" as App {
       [Tetrix]
     }
 
-node "Dateisystem\n(Datei)" as FS
-node "Datenbank\n(JDBC)" as DB
+    node "Dateisystem\n(CSV)" as FS
+    node "Datenbank\n(SQLite via JDBC)" as DB
 }
 
 Player --> App : Eingabe (Rotation,\nBewegung, Menüsteuerung)
 App --> Player : Ausgabe (Grafik,\nPunktestand, Statusmeldungen)
 
-App --> FS : Lese/Schreibe\nSpieldaten
-App --> DB : Lese/Schreibe\nSpieldaten über JDBC
+App --> FS : Lese/Schreibe\nScores
+App --> DB : Lese/Schreibe\nScores über JDBC
 @enduml

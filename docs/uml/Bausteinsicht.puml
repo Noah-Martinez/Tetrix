@@ -1,60 +1,83 @@
 @startuml
-title Bausteinsicht: Tetrix (detailliert)
+title Bausteinsicht: Tetrix (core)
 
-package "Tetrix" {
+package "Tetrix (core)" {
   component "Game" as Game
   component "AssetManager" as AM
-
-  component "GameScreen" as GScreen
-  component "GameField" as GField
-  component "CubeShape" as CS
-  component "Cube" as Cube
-
-  component "GameOverStage" as GOStage
-  component "HighScoreWidget" as HSWidget
-  component "ScoreWidget" as SWidget
-  component "NextShapeWidget" as NSWidget
-  component "StatWidget" as StatWidget
+  component "InputMultiplexer" as IM
+  component "Skin (Scene2DSkin)" as Skin
 
   component "LoadingScreen" as LS
-  component "MenuScreen" as MS
-  component "OptionsScreen" as OS
-  component "ScoreScreen" as SScreen
+  component "MainMenuScreen" as MMS
+  component "OptionMenuScreen" as OMS
+  component "ScoreboardScreen" as SBS
+  component "GameScreen" as GScreen
+  component "GameOverScreen" as GOS
+
+  component "GameStage" as GST
+  component "GameViewBuilder" as GVB
+  component "GamePauseViewBuilder" as GPVB
+  component "MainMenuViewBuilder" as MMVB
+  component "OptionMenuViewBuilder" as OMVB
+  component "ScoreboardViewBuilder" as SBVB
+  component "GameOverViewBuilder" as GOVB
+
+  component "GameService" as Service
+  component "GameInputController" as GIC
+  component "KeyHoldSystem" as KHS
+
+  component "Shape" as Shape
+  component "RotorShape" as Rotor
+  component "Cube" as Cube
 
   package "scoreboard" {
-    component "ScoreService" as SService
     interface "ScoreboardRepository" as SR
-    component "ScoreboardCsv" as SC
-    component "ScoreboardDatabase" as SD
-    component "ScoreboardFactory (Factory)" as SF
+    component "ScoreboardCsvService" as SC
+    component "ScoreboardDatabaseService" as SD
+    component "ScoreboardService (Factory)" as SF
   }
+
+  component "ConfigManager" as Cfg
+  component "PlayerConfig" as PCfg
 }
 
 Game --> AM
-Game --> GScreen
-GScreen --> GField
-GScreen --> StatWidget
-GScreen --> SService
-GField --> CS
-CS --> Cube
-GScreen --> GOStage
-GScreen --> HSWidget
-GScreen --> SWidget
-GScreen --> NSWidget
-
-
+Game --> IM
+Game --> Skin
 Game --> LS
-Game --> MS
-Game --> OS
-Game --> SScreen
-SScreen --> SService
+Game --> MMS
+Game --> OMS
+Game --> SBS
+Game --> GScreen
+Game --> GOS
 
-SService --> SF
+GScreen --> GST
+GScreen --> Service
+GScreen --> GVB
+GScreen --> GPVB
 
-' Persistenz
+MMS --> MMVB
+MMS --> SR : getHighScore()
+
+OMS --> OMVB
+OMS --> Cfg
+Cfg --> PCfg
+
+SBS --> SBVB
+SBS --> SR : getAllScores()
+
+GOS --> GOVB
+GOS --> SR : addScore()/getGameOverScores()
+
+GST --> GIC
+GST --> KHS
+Service --> GST
+Service --> Shape
+Rotor ..> Shape : extends
+Shape --> Cube
+
 SF --> SD
 SF --> SC
 SD ..|> SR
-SC ..|> SR : implements
-
+SC ..|> SR
 @enduml

@@ -5,26 +5,20 @@
 
 == 1. Analyse der Entwickler-Aufgabenstellung
 
-* **Technologie-Stack**
-** Kotlin-Desktop-Applikation auf der JVM
-** GUI-Framework nach Absprache mit SWE-Dozent
-* **Benutzeroberfläche**
-** Vollbildmodus, angepasst an Beamer/Laptop
-** Corporate Design der ABB-Technikerschule
-* **Spielmechanik**
-** Steuerung eines drehbaren Würfels („Rotor“), auf den fallende Spielsteine andocken
-** Punkte- und Level-Mechanik, Spielende bei Maximaldurchmesser
-* **Datenpersistenz**
-** Spieldaten (Name, Punkte, Dauer, Datum)
-** Speicherung wahlweise in lokaler Datei (Default) und in relationaler Datenbank via JDBC
-** Anzeige einer Bestenliste (Top 10)
-* **Versionierung & Lieferung**
-** Git als VCS
-** Auslieferung: IntelliJ-Projekt, ausführbare JAR und vollständige Dokumentation über MS Teams
-* **Zeitplan**
-** Prototyp & Requirements → Freigabe bis 22.05.2025
-** Architektur-Beschreibung → Freigabe bis 26.06.2025
-** Finaler Abgabe (inkl. Spiel & Doku) → 21.08.2025
+* Technologie-Stack
+** Kotlin/JVM Desktop-Spiel auf LibGDX mit KTX (ktx-app, ktx-inject, ktx-async, ktx-scene2d, ktx-freetype)
+** Rendering: LibGDX (2D/3D gemischt), Scene2D UI
+* Benutzeroberfläche
+** Vollbild-tauglich, auf Beamer/Laptop skalierbar (FitViewport/ExtendViewport)
+** Corporate Design via Skin (Scene2D)
+* Spielmechanik
+** Steuerung eines drehbaren Würfels (Rotor), auf den fallende Spielsteine andocken
+** Punkte-/Level-Mechanik, Spielende bei Maximaldurchmesser
+** Pausenmenü und Game-Over-Fluss
+* Datenpersistenz
+** Spieldaten: Name, Punkte, Datum (Scoreboard)
+** Speicherung in lokaler Datei (CSV, Default) oder in relationaler DB (SQLite per JDBC)
+** Anzeige einer Bestenliste und kontextuelle Game-Over-Liste
 
 == 2. Kontextsicht
 
@@ -35,85 +29,116 @@ include::uml/Kontextsicht.plantuml[]
 
 [cols="2,5",options="header"]
 |===
-| Externer Akteur / System      | Beschreibung
-| Spieler                       | Bedient das Spiel über Tastatur/Maus (Drehung, Verschieben, Menü)
-| Dateisystem (Datei)       | Standard-Speicherort für Spieldaten (CSV)
-| Datenbank (JDBC)          | Relationale Persistenz (SQLite) für Spieldaten
-| LibKtx          | Spiel Framework für Kotlin
-| Tetrix          | Unser Spiel
+| Externer Akteur / System | Beschreibung
+| Spieler | Bedient das Spiel via Tastatur (gehaltene/Einzel-Tasten), Maus optional für UI
+| Dateisystem (CSV) | Standard-Speicherort für Scores (z. B. %AppData%/Tetrix/scoreboard.csv)
+| Datenbank (SQLite via JDBC) | Alternative Persistenz für Scores (scoreboard.db)
+| LibGDX/KTX | Game-Framework und Kotlin-Extensions
+| Tetrix | Unsere Applikation (Kotlin/LibGDX/KTX)
 |===
 
 == 3. Bausteinsicht
-
 [plantuml]
 ----
 include::uml/Bausteinsicht.puml[]
 ----
 
-[cols="3,6",options="header"]
+[cols="3,7",options="header"]
 |===
-| Komponente                    | Verantwortlichkeiten
-| Game (Facade)                 | Startet und initialisiert App und globale Singletons
-| AssetManager (Singleton)      | Globale AssetManager um assets zu laden
-| GameScreen                    | Screen für die haupt Widgets vom Game
-| LoadingScreen                 | Ladebildschirm, der beim Starten angezeigt wird während Assets geladen werden
-| MenuScreen                    | Hauptmenü, Titel und Buttons um das Spiel zu starten usw
-| OptionsScreen                 | Seite um Einstellungen zu ändern
-| ScoreScreen                   | Zeigt das Scoreboard an
-
-| GameField                     | Stage für das Spielfeld
-| CubeShape (Composite)         | Ein handler für eine Gruppe von cubes
-| Cube                          | Ein Würfel des Spiels
-| GameOverStage                 | GameOver View (score speichern, name eingeben & bestenliste)
-| HighScoreWidget               | Zeigt den Highscore an
-| ScoreWidget                   | Zeigt den aktuellen score an
-| NextShapeWidget               | Zeigt die nächte Shape an
-| StatWidget                    | Zeigt die Punkte von allen Shapes
-
-| ScoreService (Singleton)      | Läd und speichert Scores & Benutzernamen
-| ScoreboardFactory (Factory)   | Liefert konkrete Scoreboard-Instanzen basierend auf Konfiguration
-| ScoreboardCsv                 | Speichert/liest Scores & Benutzernamen als CSV-Datei
-| ScoreboardDatabase            | Speichert/liest Scores & Benutzernamen via JDBC (SQLite)
+| Komponente | Verantwortlichkeiten
+| Game (KtxGame, Facade) | Startet App, initialisiert DI-Context (ktx-inject), registriert Singletons (Batch, AssetManager, Engine, Kamera, Skin, InputMultiplexer, ScoreboardRepository), setzt LoadingScreen
+| Context (ktx-inject) | Service Locator/DI-Container für Screens/Services/Subsysteme
+| AssetManager (LibGDX) | Zentrales Asset-Management; FreeType Font Loader registriert; Skin ladbar
+| Scene2DSkin/Skin | UI-Skin; Standard-Skin wird global gesetzt
+| InputMultiplexer | Verteilt Eingaben an Stage(s) und Controller
+| LoadingScreen | Zeigt Ladebildschirm während Assets bereitgestellt werden
+| MainMenuScreen | Hauptmenü (Start, Optionen, Scores, Exit), spielt Menu-Musik
+| OptionMenuScreen | UI für Key-Bindings (konfliktsicher), Audio-Volumes, Reset auf Defaults
+| ScoreboardScreen | Anzeige der Bestenliste/Rankings
+| GameScreen | Orchestriert Spiellayout (GameViewBuilder), GameStage, Pause-Overlay (GamePauseViewBuilder), Screen-Wechsel (MainMenu, GameOver)
+| GameViewBuilder | Baut HUD/Komponenten des Spiels (UI-Layout)
+| GamePauseViewBuilder | Baut das Pause-Menü (Overlay)
+| MainMenuViewBuilder | Baut das Hauptmenü-Layout
+| OptionMenuViewBuilder | Baut Optionen-Layout (Keybinding-Buttons, Slider)
+| GameStage (Stage) | Spielfeld-Bühne, Rendering/Camera-Fit, KeyHoldSystem, Übergabe an GameService
+| GameInputController | Mappt Key-Events (einmalige Aktionen, nicht gehaltene L/R) auf Game-Aktionen
+| KeyHoldSystem | Wiederholtes Bewegen links/rechts bei gehaltenen Tasten; konfigurierbare Wiederholrate
+| GameService | Zentrale Spiel-Logik: Start/Reset/Pause/Resume, Step-/Timersteuerung, Kollisions-/Andocklogik, Level/Fallgeschwindigkeit, Score-Updates, GameOver-State
+| Shape/Cube | Spiellogik-Entitäten; Cube ist kleinste Einheit, Shapes sind Verbünde
+| RotorShape | Spezielle Shape: Drehring, Quadrat-Erkennung/-Entfernung, Inward-Moves, Asynchronität via KtxAsync
+| ScoreboardRepository (Interface) | Abstraktion Persistenz: addScore, getAllScores, getHighScore, getGameOverScores
+| ScoreboardCsvService (Repository) | CSV-Implementierung (AppDataDir/Tetrix/scoreboard.csv), init + IO + Ranking
+| ScoreboardDatabaseService (Repository) | SQLite-Implementierung (scoreboard.db), Tabellenanlage, Queries, Ranking (inkl. Fenster um Spielerscore)
+| ScoreboardService (Factory) | Erzeugt/initiiert Repository (CSV/DB) und cached Instanzen; Default: CSV
+| ConfigManager | Lädt/speichert PlayerConfig über LibGDX Preferences; prüft Keybinding-Duplikate; Audio-Einstellungen
+| PlayerConfig (+ Controls) | TetrominoControls, RotorControls, AudioControls mit Defaults/Keys
 |===
 
 === 3.2 Verwendete Architektur- und Entwurfsmuster
 
-[cols="2,5",options="header"]
+[cols="3,7",options="header"]
 |===
-| Muster                          | Anwendung im Tetrix-Spiel
-| Facade                          | Die Game-Klasse bietet eine vereinfachte Schnittstelle zu den komplexen Subsystemen des Spiels
-| Singleton                       | AssetManager und ScoreService existieren als einzige Instanzen im System
-| Factory                         | ScoreboardFactory erzeugt konkrete Implementierungen des ScoreboardRepository-Interfaces
-| Strategy                        | Verschiedene Scoreboard-Implementierungen (CSV, Datenbank) können austauschbar verwendet werden
-| Composite                       | CubeShape setzt sich aus mehreren Cube-Objekten zusammen
+| Muster | Anwendung im Tetrix-Spiel
+| Facade | Game kapselt Initialisierung und vereinfacht Zugriff auf Subsysteme (Screens, DI, Assets)
+| Singleton (via DI) | AssetManager, Batch, Skin, InputMultiplexer, ScoreboardRepository als Einzelinstanzen im Context
+| Service/Repository | ScoreboardRepository als Persistenzabstraktion mit CSV/DB-Implementierungen
+| Factory | ScoreboardService wählt und initialisiert die konkrete Repository-Implementierung (CSV/DB)
+| Strategy | Austauschbare Persistenzstrategien (CSV vs. SQLite)
+| Composite | Shapes bestehen aus mehreren Cubes
+| MVC/MVP (Screen + ViewBuilder) | UI als deklarative Builder getrennt von Logik/State (GameService)
+| Event-Controller | GameInputController + KeyHoldSystem für Eingabe
 |===
 
 == 4. Laufzeitsicht
 
-=== 4.1 Sequenzdiagramm: Spielstart & Initialisierung
+=== 4.1 Sequenz: Spielstart & Initialisierung
+- Game.create(): KtxAsync, AssetManager FreeType, Context-Register (Batch, AssetManager, Engine, Kamera, Skin, InputMultiplexer, ScoreboardRepository=CSV), setScreen(LoadingScreen)
+- LoadingScreen → MainMenuScreen
 
 [plantuml]
 ----
 include::uml/Sequenzdiagramm.puml[]
 ----
 
-=== 4.2 Sequenzdiagramm: Stein-Fall
+=== 4.2 Sequenz: Eingabe & Bewegung
+- InputMultiplexer leitet Tastendrücke an Stage und GameInputController weiter
+- KeyHoldSystem erzeugt kontinuierliche Left/Right-Moves; GameInputController mapped Einzelaktionen (Rotationen, Snap, FastFall)
+- GameService.move*/rotate* verarbeitet Logik; GameStage rendert Resultat
 
 [plantuml]
 ----
 include::uml/SteinFall.puml[]
 ----
 
-=== 4.3 Sequenzdiagramm: Andocken
+=== 4.3 Sequenz: Andocken & Quadrat-Entfernung
+- Bei Kollision startet Lock Delay (bis zu 7 Resets durch gültige Moves). Nach Ablauf: attachActiveShapeToRotor → RotorShape.removeSquaresAsync (erkenne volle Perimeter, entferne, moveCubesIn bei Kettenfunden, re-prüfe Radius) → Score-Update (cubesDestroyed × squaresDestroyed), Squares/Level-Update → nächster Step/Shape.
 
 [plantuml]
 ----
 include::uml/Andocken.puml[]
 ----
 
-=== 4.4 Aktivitätsdiagramm: Spielende-Entscheidung
+=== 4.4 Aktivität: Spielende-Entscheidung
+- GameService überwacht Maximaldurchmesser/Endbedingungen → setzt isGameOver → GameScreen wechselt zu GameOverScreen
 
 [plantuml]
 ----
 include::uml/GameOver.puml[]
 ----
+
+== 5. Persistenz & Datenmodell
+
+- ScoreboardRepository API: init(location), addScore(ScoreEntity) → ScoreDto, getAllScores(), getHighScore(), getGameOverScores(score)
+- CSV: Datei scoreboard.csv mit Header id,username,score; Sortierung und Ranking in Memory
+- SQLite: Tabelle scores(id, username, score); Ranking per SQL
+- GameOver-Fenster inkl. Top 1 + ±2 um Spielerscore
+- Speicherort: AppDataDir.resolve("Tetrix", "ch.abbts")
+- Default Storage kann gewechselt werden, indem in Game.contextRegister() StorageType.DATABASE / StorageType.CSV gesetzt wird)
+
+== 6. Eingabe & Konfiguration
+
+- ConfigManager: LibGDX Preferences (Schlüssel pro Binding/Audio), Validierung gegen doppelte Tastenbelegung
+- PlayerConfig: Defaults (WASD, Space, Q/E; Rotor J/L; Audio 0.05/0.1)
+- OptionMenuScreen: Rebinding-Flow mit visueller Rückmeldung (Label "..."), Snackbar bei Konflikt
+- Effekte und Musik können mit dem Regler angepasst werden
+- KeyHoldSystem: konfigurierbare Repeat-Rate (siehe KeyHoldConfig/KeyHoldSystem), glatte horizontale Bewegung

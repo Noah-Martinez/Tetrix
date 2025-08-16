@@ -1,37 +1,32 @@
 @startuml
 hide footbox
-title Laufzeitsicht: Spielstart
+title Laufzeitsicht: Spielstart (core)
 
 actor Spieler as Player
 participant Game as G
 participant "LoadingScreen" as LS
-participant "MenuScreen" as MS
+participant "MainMenuScreen" as MMS
 participant "GameScreen" as GS
 participant "AssetManager" as AM
-participant "ScoreScreen" as SS
-participant "OptionsScreen" as OS
-participant "GameField" as GF
+participant "ScoreboardScreen" as SBS
+participant "OptionMenuScreen" as OMS
+participant "GameStage" as GST
 
 Player -> G : create()
 activate G
-G -> LS ** : init
-G -> MS ** : init
-G -> GS ** : init
 G -> AM ** : init
-G -> SS  ** : init
-G -> OS  ** : init
 G -> LS : show()
 activate LS
 LS -> LS : loadAssets()
 Player --> LS : <<interact>>
-LS -> MS : show()
+LS -> MMS : show()
 deactivate LS
-activate MS
-Player --> MS : press "Start" button
-MS -> GS : show()
+activate MMS
+Player --> MMS : press "Start" button
+MMS -> GS : show()
 activate GS
-GS -> GF ** : init
-note over GF
-game cycle runs
+GS -> GST ** : init
+note over GST
+render/update loop
 endnote
 @enduml
