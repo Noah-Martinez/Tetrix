@@ -17,6 +17,17 @@ enum class SnackbarPosition {
 }
 
 object Snackbar {
+    /**
+     * Displays a snackbar message on the given stage at the specified position.
+     *
+     * The snackbar appears with an animation, remains on the screen for a short period,
+     * and then animates back off the screen before being removed.
+     *
+     * @param skin the UI skin used to style the snackbar
+     * @param stage the stage where the snackbar will be displayed
+     * @param message the message text to be displayed in the snackbar
+     * @param position the position on the stage where the snackbar will appear, defaults to BOTTOM_CENTER
+     */
     fun show(skin: Skin, stage: Stage, message: String, position: SnackbarPosition = SnackbarPosition.BOTTOM_CENTER) {
         val targetYOffset = 20f
         val background = skin.getDrawable("accent")

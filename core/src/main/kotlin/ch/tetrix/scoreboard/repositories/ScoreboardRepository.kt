@@ -5,50 +5,43 @@ import ch.tetrix.scoreboard.models.ScoreEntity
 
 interface ScoreboardRepository {
     /**
-     * Initializes the storage mechanism for the scoreboard.
-     * This function sets up the necessary environment (e.g., files or database tables)
-     * based on the provided location or defaults if not specified.
+     * Initializes the scoreboard with the provided location for storage.
+     * If the location is not specified, a default location is used.
      *
-     * @param location The optional location for the scoreboard storage. If not provided,
-     *                 a default path or configuration is used.
-     * @throws ch.tetrix.shared.ScoreboardInitException
+     * @param location Optional file path for storing the scoreboard data.
+     * If the path is empty, a default location is chosen.
      */
     fun init(location: String = "")
 
     /**
-     * Adds a new score entry to the scoreboard.
+     * Adds a new score to the scoreboard.
      *
-     * @return saved ScoreEntity
-     * @throws ch.tetrix.shared.ScoreboardSaveException
+     * @param scoreEntity An object containing the score details, such as the user's name, score value, and optional ID.
+     * @return A `ScoreDto` object representing the saved score with additional details such as rank.
      */
     fun addScore(scoreEntity: ScoreEntity): ScoreDto
 
     /**
-     * Retrieves the list of scores from the scoreboard storage.
+     * Retrieves a list of all scores from the scoreboard.
      *
-     * @return A list of all Scores.
-     *         Returns an empty list if no scores are available.
-     * @throws ch.tetrix.shared.ScoreboardLoadException
+     * @return A list of `ScoreDto` objects representing all scores currently stored.
      */
     fun getAllScores(): List<ScoreDto>
 
     /**
-     * Retrieves the best ranking score from the scoreboard storage.
+     * Retrieves the highest score from the scoreboard storage.
      *
-     * @return A ScoreEntry or null if no scores are available.
-     * @throws ch.tetrix.shared.ScoreboardLoadException
+     * @return The highest score as a `ScoreDto` object, or `null` if no scores are available.
      */
     fun getHighScore(): ScoreDto?
 
     /**
-     * Retrieves a list of game over scores, including the player's score and surrounding scores,
-     * ranked in descending order. The result includes the highest score, the player's score,
-     * and surrounding scores, up to a total of 6 entries.
+     * Retrieves a list of `ScoreDto` objects to display at the game-over screen.
+     * The list is typically filtered or sorted based on the provided score, representing
+     * the player's score in the current game session.
      *
-     * @param score The score achieved by the player to be included in the ranking.
-     * @return A list of ScoreDto objects representing the top score and a context of scores
-     *         around the player's score, ordered by rank.
-     * @throws ch.tetrix.shared.ScoreboardLoadException If an error occurs during query execution or database access.
+     * @param score The player's score from the game session, used to determine relevant scores for display.
+     * @return A list of `ScoreDto` objects to be shown on the game-over leaderboard.
      */
     fun getGameOverScores(score: Int): List<ScoreDto>
 }

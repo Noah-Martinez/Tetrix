@@ -9,14 +9,15 @@ import ch.tetrix.game.components.GameViewBuilder
 import ch.tetrix.game.services.GameService
 import ch.tetrix.game.stages.GameStage
 import ch.tetrix.mainmenu.screens.MainMenuScreen
+import ch.tetrix.shared.ComponentBackground
 import ch.tetrix.shared.TxScreen
+import ch.tetrix.shared.ValueBackground
 import ch.tetrix.shared.extensions.resizeToUniformCells
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input
 import com.badlogic.gdx.InputMultiplexer
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.scenes.scene2d.Stage
-import com.badlogic.gdx.scenes.scene2d.utils.Drawable
 import com.badlogic.gdx.utils.viewport.ExtendViewport
 import com.badlogic.gdx.utils.viewport.FitViewport
 import ktx.inject.Context
@@ -25,12 +26,6 @@ import ktx.log.logger
 import ktx.scene2d.KTableWidget
 import ktx.scene2d.Scene2DSkin
 
-data class ComponentBackground(val drawable: Drawable)
-data class ValueBackground(val drawable: Drawable)
-
-/**
- * Main game screen that coordinates the different components of the game.
- */
 class GameScreen(val context: Context) : TxScreen() {
     private val game by lazy { context.inject<Game>() }
     private val inputMultiplexer by lazy { context.inject<InputMultiplexer>() }
