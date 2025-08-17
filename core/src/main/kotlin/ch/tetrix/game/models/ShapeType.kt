@@ -8,10 +8,11 @@ import ch.tetrix.game.actors.shapeImplementations.OShape
 import ch.tetrix.game.actors.shapeImplementations.SShape
 import ch.tetrix.game.actors.shapeImplementations.TShape
 import ch.tetrix.game.actors.shapeImplementations.ZShape
-import ktx.inject.Context
 import java.util.EnumMap
+import ktx.inject.Context
+import ktx.scene2d.KTableWidget
 
-enum class ShapeType(private val factory: (Context, GridPosition?) -> Shape) {
+enum class ShapeType(private val factory: (KTableWidget, Context, GridPosition?) -> Shape) {
     I (::IShape),
     J (::JShape),
     L (::LShape),
@@ -20,8 +21,8 @@ enum class ShapeType(private val factory: (Context, GridPosition?) -> Shape) {
     T (::TShape),
     Z (::ZShape);
 
-    fun create(context: Context, position: GridPosition? = null): Shape =
-        factory(context, position)
+    fun create(gridTable: KTableWidget, context: Context, position: GridPosition? = null): Shape =
+        factory(gridTable, context, position)
 
     companion object {
         private const val WINDOW = 12 // Jedes shape erscheint mindestens ein mal alle X shapes
@@ -76,8 +77,5 @@ enum class ShapeType(private val factory: (Context, GridPosition?) -> Shape) {
             last = pick
             return pick
         }
-
-        fun randomShape(context: Context, position: GridPosition? = null): Shape =
-            randomType().create(context, position)
     }
 }

@@ -15,10 +15,9 @@ import ktx.scene2d.table
 
 object GameViewBuilder {
     fun layout(context: Context, gameStage: GameStage): KTableWidget {
-        val gameTable = gameStage.actors[0] as KTableWidget
-
         val highScoreComponent = highScoreComponent(context)
         val gameValuesComponent = gameValuesComponent(context)
+        val nextShapeComponent = nextShapeContainer(context)
 
         return KTableWidget(context.inject()).apply {
             setFillParent(true)
@@ -40,7 +39,7 @@ object GameViewBuilder {
 
                 add(highScoreComponent)
             }
-            add(gameTable).fill()
+            add(gameStage.table).fill()
             table {
                 top()
                 it.fill()
@@ -54,7 +53,10 @@ object GameViewBuilder {
                     .fillX()
 
                 add(gameValuesComponent)
+                row()
+                add(nextShapeComponent)
             }
+
         }
     }
 
@@ -91,6 +93,40 @@ object GameViewBuilder {
             add(valuePair(context, "SCORE", gameService.score)).row()
             add(valuePair(context, "LEVEL", gameService.level)).row()
             add(valuePair(context, "SQUARES", gameService.squares))
+        }
+    }
+
+    fun nextShapeContainer(context: Context): KTableWidget {
+        val tableBackground = context.inject<ComponentBackground>().drawable
+        val skin = context.inject<Skin>()
+
+        return KTableWidget(skin).apply {
+            setBackground(tableBackground)
+            pad(16f)
+
+            defaults().expand()
+            label("NEXT")
+            row().padTop(8f).fill()
+            add(nextShapeTable(context)).row()
+        }
+    }
+
+    fun nextShapeTable(context: Context): KTableWidget {
+        val skin = context.inject<Skin>()
+        val valueBackground = context.inject<ValueBackground>().drawable
+
+        return KTableWidget(skin).apply {
+            name = "nextShapeTable"
+            setBackground(valueBackground)
+            top()
+            left()
+            defaults().uniform()
+
+            repeat(4) {
+                repeat(5) { add() }
+                row()
+            }
+            center()
         }
     }
 

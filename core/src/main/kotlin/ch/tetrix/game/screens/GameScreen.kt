@@ -10,6 +10,7 @@ import ch.tetrix.game.services.GameService
 import ch.tetrix.game.stages.GameStage
 import ch.tetrix.mainmenu.screens.MainMenuScreen
 import ch.tetrix.shared.TxScreen
+import ch.tetrix.shared.extensions.resizeToUniformCells
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input
 import com.badlogic.gdx.InputMultiplexer
@@ -21,6 +22,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport
 import ktx.inject.Context
 import ktx.inject.register
 import ktx.log.logger
+import ktx.scene2d.KTableWidget
 import ktx.scene2d.Scene2DSkin
 
 data class ComponentBackground(val drawable: Drawable)
@@ -36,7 +38,7 @@ class GameScreen(val context: Context) : TxScreen() {
     private val batch = SpriteBatch()
 
     private val viewport by lazy { FitViewport(GAME_WIDTH, GAME_HEIGHT) }
-    override val stage by lazy { Stage(viewport, batch) }
+    public override val stage by lazy { Stage(viewport, batch) }
 
     private val pauseStage by lazy {
         Stage(ExtendViewport(GAME_WIDTH, GAME_HEIGHT), batch) // Uses the entire screen
@@ -45,8 +47,8 @@ class GameScreen(val context: Context) : TxScreen() {
     private val componentBackground by lazy { skin.getDrawable("table-background-round") }
     private val valueBackground by lazy { skin.getDrawable("game-value-bg") }
 
-    private val gameStage by lazy { GameStage(context, batch) }
-    private val gameLayout by lazy { GameViewBuilder.layout(context, gameStage) }
+    val gameStage: GameStage
+    private var gameLayout: KTableWidget
 
     private val pauseOverlay by lazy {
         GamePauseViewBuilder.layout(
@@ -59,16 +61,21 @@ class GameScreen(val context: Context) : TxScreen() {
         private val log = logger<GameScreen>()
     }
 
-    override fun show() {
+    init {
         context.register {
             bindSingleton<GameService>(GameService(context))
             bindSingleton(ComponentBackground(componentBackground))
             bindSingleton(ValueBackground(valueBackground))
         }
 
+        gameStage = GameStage(context, batch)
+        gameLayout = GameViewBuilder.layout(context, gameStage)
+    }
+
+    override fun show() {
         stage.addActor(gameLayout)
         inputMultiplexer.addProcessor(stage)
-        gameService.startNewGame(gameStage)
+        gameService.startNewGame(this)
     }
 
     override fun render(delta: Float) {
@@ -96,6 +103,8 @@ class GameScreen(val context: Context) : TxScreen() {
         stage.viewport.apply()
         stage.draw()
         gameStage.draw()
+
+        stage.root.findActor<KTableWidget>("nextShapeTable")?.resizeToUniformCells()
 
         if(gameService.isGamePaused.value) {
             pauseStage.viewport.apply()

@@ -7,23 +7,27 @@ import ch.tetrix.game.actors.Shape
 import ch.tetrix.game.models.Directions
 import ch.tetrix.game.models.GridPosition
 import ch.tetrix.game.models.MoveResult
+import ch.tetrix.game.models.ShapeType
 import ch.tetrix.game.services.GameService
 import ch.tetrix.shared.ConfigManager
 import ch.tetrix.shared.models.PlayerConfig
 import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.audio.Sound
+import kotlin.math.abs
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ktx.async.KtxAsync
 import ktx.inject.Context
-import kotlin.math.abs
+import ktx.scene2d.KTableWidget
 
 // TODO: extrude main rotor cube to make it stand out more
 class RotorShape(
+    gridTable: KTableWidget,
     context: Context,
     val squareClearSound: Sound,
     val tetrominoFallingAfterSquareClearSound: Sound,
     ) : Shape(
+    gridTable,
     GridPosition(8, 27),
     arrayOf(
         GridPosition(0, 0),
@@ -32,6 +36,9 @@ class RotorShape(
     texture = context.inject<AssetManager>()[TextureAssets.CUBE_RED],
     glow = true,
 ) {
+    override val shapeType: ShapeType
+        get() = error("no type")
+
     data class SquaresResult(
         val cubesDestroyed: Int,
         val squaresDestroyed: Int,

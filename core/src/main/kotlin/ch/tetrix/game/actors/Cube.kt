@@ -5,7 +5,8 @@ import ch.tetrix.game.models.Directions
 import ch.tetrix.game.models.GridPosition
 import ch.tetrix.game.models.MoveResult
 import ch.tetrix.game.services.GameService
-import ch.tetrix.game.stages.GameStage
+import ch.tetrix.shared.extensions.gridToWorldPos
+import ch.tetrix.shared.extensions.gridToWorldScale
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.graphics.g3d.Environment
@@ -13,12 +14,13 @@ import com.badlogic.gdx.graphics.g3d.ModelBatch
 import com.badlogic.gdx.graphics.g3d.ModelInstance
 import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute
 import com.badlogic.gdx.scenes.scene2d.Actor
-import com.badlogic.gdx.scenes.scene2d.Stage
 import ktx.inject.Context
 import ktx.log.logger
 import ktx.math.vec3
+import ktx.scene2d.KTableWidget
 
 class Cube(
+    private val gridTable: KTableWidget,
     var localPos: GridPosition,
     var shape: Shape,
     context: Context,
@@ -28,8 +30,6 @@ class Cube(
     private val gameService : GameService = context.inject()
     private val modelBatch: ModelBatch = context.inject()
     private val environment: Environment = context.inject()
-
-    private lateinit var grid: GameStage
 
     val gridPos: GridPosition
         get() = shape.gridPos + localPos
@@ -50,19 +50,13 @@ class Cube(
         }
     }
 
-    override fun setStage(stage: Stage?) {
-        super.setStage(stage)
-
-        if (stage is GameStage) grid = stage
-    }
-
     override fun act(delta: Float) {
         super.act(delta)
-        val cellDimension = grid.gridToWorldScale(gridPos)
+        val cellDimension = gridTable.gridToWorldScale(gridPos)
         width = kotlin.math.round(cellDimension.x)
         height = kotlin.math.round(cellDimension.y)
 
-        val worldPos = grid.gridToWorldPos(gridPos)
+        val worldPos = gridTable.gridToWorldPos(gridPos)
         setPosition(worldPos.x, worldPos.y)
     }
 
