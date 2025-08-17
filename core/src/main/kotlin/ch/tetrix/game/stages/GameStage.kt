@@ -3,13 +3,12 @@ package ch.tetrix.game.stages
 import ch.tetrix.GAME_HEIGHT
 import ch.tetrix.GAME_WIDTH
 import ch.tetrix.game.GameInputController
-import ch.tetrix.game.actors.Cube.Companion.MODEL_DEPTH
 import ch.tetrix.game.models.Directions
-import ch.tetrix.game.models.GridPosition
 import ch.tetrix.game.services.GameService
 import ch.tetrix.shared.ConfigManager
 import ch.tetrix.shared.KeyHoldConfig
 import ch.tetrix.shared.KeyHoldSystem
+import ch.tetrix.shared.extensions.resizeToUniformCells
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.InputMultiplexer
 import com.badlogic.gdx.graphics.GL20
@@ -25,12 +24,10 @@ import com.badlogic.gdx.utils.viewport.FitViewport
 import ktx.inject.Context
 import ktx.inject.register
 import ktx.log.logger
-import ktx.math.plus
 import ktx.math.vec2
 import ktx.math.vec3
 import ktx.scene2d.KTableWidget
 import net.mgsx.gltf.scene3d.lights.DirectionalLightEx
-import kotlin.math.max
 
 class GameStage(
     val context: Context,
@@ -46,17 +43,6 @@ class GameStage(
 
     private val cameraRotationDeg = vec2(-3f, 2f)
     private val lightRotationNor = vec3(-1f, -1f, 0f)
-
-    private val cameraCompensation by lazy {
-        val zFront = MODEL_DEPTH / 2f
-        val radX = cameraRotationDeg.x * MathUtils.degRad
-        val radY = cameraRotationDeg.y * MathUtils.degRad
-
-        val dy = zFront * MathUtils.tan(radX)
-        val dx = -zFront * MathUtils.tan(radY)
-
-        Vector2(dx, dy)
-    }
 
     private val stageEnvironment = Environment().apply {
         add(DirectionalLightEx().apply {
@@ -126,7 +112,7 @@ class GameStage(
 
     override fun draw() {
         if (!tableSizeSet && table.width > 0) {
-            setUniformTableSize()
+            table.resizeToUniformCells()
         }
 
         Gdx.gl.glEnable(GL20.GL_DEPTH_TEST)
@@ -169,45 +155,6 @@ class GameStage(
 
             update()
         }
-    }
-
-    private fun setUniformTableSize() {
-        table.apply {
-            val cellSize = max(
-                (width - padX - background.minWidth) / columns,
-                (height - padY - background.minHeight) / rows,
-            )
-
-            cells.forEach { cell -> cell.size(cellSize) }
-
-            width = columns * cellSize
-            height = rows * cellSize
-        }
-        tableSizeSet = true
-
-        table.invalidateHierarchy()
-    }
-
-    /** gets the coordinates of a cell in the grid from a grid position */
-    fun gridToWorldPos(pos: GridPosition): Vector2 {
-        if (gameService.isOutOfBounds(pos)) {
-            error("position $pos out of bounds")
-        }
-        val cell = table.cells[(pos.y * table.columns) + pos.x]
-
-        val tablePos = vec2(table.x, table.y)
-        val cellPos = vec2(cell.actorX, cell.actorY)
-
-        return tablePos + cellPos + cameraCompensation
-    }
-
-    /** gets the dimensions of a cell in the grid from a grid position */
-    fun gridToWorldScale(pos: GridPosition): Vector2 {
-        if (gameService.isOutOfBounds(pos)) {
-            error("position $pos out of bounds")
-        }
-        val cell = table.cells[(pos.y * table.columns) + pos.x]
-        return vec2(cell.actorWidth, cell.actorHeight)
     }
 
     override fun dispose() {

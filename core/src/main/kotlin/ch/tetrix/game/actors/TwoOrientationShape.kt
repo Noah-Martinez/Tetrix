@@ -5,14 +5,16 @@ import ch.tetrix.game.models.Orientation
 import ch.tetrix.game.services.GameService
 import com.badlogic.gdx.graphics.Texture
 import ktx.inject.Context
+import ktx.scene2d.KTableWidget
 
 /** Shape with only tow orientation states (Horizontal / Vertical) */
 abstract class TwoOrientationShape(
+    gridTable: KTableWidget,
     gridPos: GridPosition,
     cubePositions: Array<GridPosition>,
     context: Context,
-    texture: Texture
-) : Shape(gridPos, cubePositions, context, texture) {
+    texture: Texture,
+) : Shape(gridTable, gridPos, cubePositions, context, texture) {
     private val gameService : GameService = context.inject()
     // NOTE: only has 2 rotation states not 4 like the default shape
     private var orientation = Orientation.Horizontal

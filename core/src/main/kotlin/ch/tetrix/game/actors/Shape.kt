@@ -3,17 +3,20 @@ package ch.tetrix.game.actors
 import ch.tetrix.game.models.Directions
 import ch.tetrix.game.models.GridPosition
 import ch.tetrix.game.models.MoveResult
+import ch.tetrix.game.models.ShapeType
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.scenes.scene2d.Group
 import ktx.inject.Context
 import ktx.log.logger
+import ktx.scene2d.KTableWidget
 
 /**
  * Shape is a Group of multiple Cube actors.
  * Helps with moving and rotating the cubes based on their relative position to the shape.
  */
 abstract class Shape(
+    private val gridTable: KTableWidget,
     /** position on grid also rotation anchor */
     gridPos: GridPosition,
     /** positions of children relative to shape grid position */
@@ -22,6 +25,8 @@ abstract class Shape(
     private val texture: Texture,
     private val glow: Boolean = false,
 ): Group() {
+    abstract val shapeType: ShapeType
+
     protected val _cubes = arrayListOf<Cube>()
     val cubes: Array<Cube>
         get() = _cubes.toTypedArray()
@@ -41,7 +46,7 @@ abstract class Shape(
         isTransform = true
 
         cubePositions.forEach {
-            val cube = Cube(it, this, context, texture, glow)
+            val cube = Cube(gridTable,it, this, context, texture, glow)
             addActor(cube)
             _cubes.add(cube)
         }

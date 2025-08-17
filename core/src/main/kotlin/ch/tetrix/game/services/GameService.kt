@@ -9,7 +9,7 @@ import ch.tetrix.game.models.Directions
 import ch.tetrix.game.models.GridPosition
 import ch.tetrix.game.models.MoveResult
 import ch.tetrix.game.models.ShapeType
-import ch.tetrix.game.stages.GameStage
+import ch.tetrix.game.screens.GameScreen
 import ch.tetrix.scoreboard.repositories.ScoreboardRepository
 import ch.tetrix.shared.BehaviorSignal
 import ch.tetrix.shared.ConfigManager
@@ -19,6 +19,7 @@ import com.badlogic.gdx.utils.Timer
 import kotlin.math.max
 import ktx.inject.Context
 import ktx.log.logger
+import ktx.scene2d.KTableWidget
 
 // TODO: visualize where shapes would end up when dropped
 class GameService(private val context: Context) {
@@ -43,7 +44,7 @@ class GameService(private val context: Context) {
     val rows: Int
         get() = NUM_ROWS
 
-    private lateinit var gameStage: GameStage
+    private lateinit var gameScreen: GameScreen
     private var assets: AssetManager = context.inject<AssetManager>()
     private val config by lazy { ConfigManager.playerConfig }
 
@@ -59,6 +60,7 @@ class GameService(private val context: Context) {
 
     /** actively controlled shape */
     private var activeShape: Shape? = null
+    private var nextShape: Shape? = null
     private lateinit var rotor: RotorShape
 
     private val _shapes = arrayListOf<Shape>()
@@ -92,13 +94,13 @@ class GameService(private val context: Context) {
     }
 
 
-    fun startNewGame(gameStage: GameStage) {
+    fun startNewGame(gameScreen: GameScreen) {
         log.info { "Starting new game" }
         reset()
-        this.gameStage = gameStage
+        this.gameScreen = gameScreen
         val scoreboardRepo = context.inject<ScoreboardRepository>()
         highScore.dispatch(scoreboardRepo.getHighScore()?.score ?: 0)
-        setRotor(RotorShape(context, squareClearSound, tetrominoFallingAfterSquareClearSound))
+        setRotor(RotorShape(this.gameScreen.gameStage.table, context, squareClearSound, tetrominoFallingAfterSquareClearSound))
         isGameActive.dispatch(true)
         isGameOver.dispatch(false)
         isGamePaused.dispatch(false)
@@ -121,12 +123,14 @@ class GameService(private val context: Context) {
      * Resets all game values to initial state
      */
     private fun reset() {
-        if(::gameStage.isInitialized) {
-            gameStage.dispose()
+        if(::gameScreen.isInitialized) {
+            gameScreen.gameStage.dispose()
         }
+
         if(::rotor.isInitialized) {
             rotor.remove()
         }
+
         activeShape?.remove()
 
         isFastFallActive = false
@@ -177,7 +181,7 @@ class GameService(private val context: Context) {
     }
 
     fun isOutOfBounds(pos: GridPosition): Boolean {
-        return pos.x < 0 || pos.x >= NUM_COLS || pos.y < 0 || pos.y >= NUM_ROWS
+        return pos.x !in 0..NUM_COLS || pos.y < 0 || pos.y > NUM_ROWS
     }
 
     fun moveActiveShape(direction: Directions): MoveResult {
@@ -257,14 +261,18 @@ class GameService(private val context: Context) {
             return
         }
 
-        var activeShape = activeShape
-        if (activeShape == null) {
-            setActiveShape(ShapeType.randomShape(context))
-            activeShape = this.activeShape!!
-            log.debug { "New active shape: ${activeShape.javaClass.simpleName}" }
+        if (activeShape == null && nextShape == null) {
+            setActiveShape(ShapeType.randomType())
+            setNextShape(ShapeType.randomType())
+        } else if (activeShape == null && nextShape != null) {
+            setActiveShape(nextShape!!.shapeType)
+
+            nextShape?.remove()
+            nextShape = null
+            setNextShape(ShapeType.randomType())
         }
 
-        val moveResult = activeShape.move(activeShape.fallDirection)
+        val moveResult = activeShape?.move(activeShape!!.fallDirection)
 
         if (moveResult !is MoveResult.Collision) {
             // valid step, piece is not colliding (e.g. fell into a gap)
@@ -275,7 +283,7 @@ class GameService(private val context: Context) {
             return
         }
 
-        handleCollision(moveResult, activeShape)
+        handleCollision(moveResult, activeShape!!)
     }
 
     private fun handleCollision(moveResult: MoveResult.Collision, activeShape: Shape) {
@@ -312,20 +320,25 @@ class GameService(private val context: Context) {
         }
     }
 
-    private fun setActiveShape(shape: Shape) {
-        activeShape = addShape(shape)
+    private fun setActiveShape(shapeType: ShapeType) {
+        activeShape = shapeType.create(gameScreen.gameStage.table, context)
+        addShapeToGameStage(activeShape!!)
         lockDelay?.cancel()
         log.debug { "reset lock delay." }
         lockDelayResets = 0
     }
 
-    private fun setRotor(shape: RotorShape) {
-        rotor = addShape(shape)
+    private fun setNextShape(shapeType: ShapeType) {
+        val table = gameScreen.stage.root.findActor<KTableWidget>("nextShapeTable")
+        val shape = shapeType.create(table, context, position = GridPosition(2, 1))
+        nextShape = addShapeToNextShapeComponent(shape)
     }
 
-    private fun <T: Shape> addShape(shape: T): T{
-        val gameComponent = gameStage
+    private fun setRotor(shape: RotorShape) {
+        rotor = addShapeToGameStage(shape)
+    }
 
+    private fun <T: Shape> addShapeToGameStage(shape: T): T{
         val canPlaceShape = shape.cubes.map { it.gridPos }.all { !cubePositions.containsKey(it) }
 
         if (!canPlaceShape) {
@@ -335,24 +348,28 @@ class GameService(private val context: Context) {
 
         _shapes.add(shape)
 
-        gameComponent.addActor(shape)
+        gameScreen.gameStage.addActor(shape)
+        return shape
+    }
+
+    private fun <T: Shape> addShapeToNextShapeComponent(shape: T): T{
+        gameScreen.stage.addActor(shape)
         return shape
     }
 
     /** used to move cubes from one shape to another (usually the rotor) */
     private fun attachActiveShapeToRotor() {
         lockDelay?.cancel()
-        val activeShape = activeShape
 
-        if (activeShape == null || activeShape.canMove()) {
+        if (activeShape?.hasChildren() == false || activeShape!!.canMove()) {
             return
         }
 
-        activeShape.transferCubesTo(rotor)
+        activeShape?.transferCubesTo(rotor)
         tetrominoLandedSound.play(config.audio.soundVolume)
-        activeShape.remove()
+        activeShape?.remove()
         _shapes.remove(activeShape)
-        this.activeShape = null
+        activeShape = null
 
         gameTimer?.cancel()
 
@@ -362,7 +379,7 @@ class GameService(private val context: Context) {
             squares.dispatch(squares.value + result.squaresDestroyed)
             updateLevel()
 
-            log.error { "Next step" }
+            log.info { "Next step" }
             scheduleNextStep()
         }
     }
