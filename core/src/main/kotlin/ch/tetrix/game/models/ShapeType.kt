@@ -21,9 +21,6 @@ enum class ShapeType(private val factory: (KTableWidget, Context, GridPosition?)
     T (::TShape),
     Z (::ZShape);
 
-    fun create(gridTable: KTableWidget, context: Context, position: GridPosition? = null): Shape =
-        factory(gridTable, context, position)
-
     companion object {
         private const val WINDOW = 12 // Jedes shape erscheint mindestens ein mal alle X shapes
         private const val BOOST_START = 3 // Erhöhe Wahrscheinlichkeit nach dem X-ten mal wo dieses shape nicht auftritt
@@ -37,6 +34,16 @@ enum class ShapeType(private val factory: (KTableWidget, Context, GridPosition?)
         private var last: ShapeType? = null
         private var last2: ShapeType? = null
 
+        /**
+         * Randomly selects a ShapeType based on weighted probabilities derived from various conditions.
+         *
+         * The method considers factors such as drought (how long a shape type has not been picked),
+         * repeat penalties for the last selected shape type, and a boosting mechanism for types that
+         * have been absent for a longer duration. It ensures balanced randomness with custom rules
+         * to influence shape selection in gameplay.
+         *
+         * @return A randomly selected ShapeType that adheres to the weighted randomness criteria.
+         */
         fun randomType(): ShapeType {
             val (maxType, maxDrought) = entries
                 .maxBy { drought[it] ?: 0 }
@@ -78,4 +85,17 @@ enum class ShapeType(private val factory: (KTableWidget, Context, GridPosition?)
             return pick
         }
     }
+
+    /**
+     * Creates a new Shape instance using the provided parameters.
+     *
+     * @param gridTable The grid table where the shape will be placed.
+     *                  It provides the context of the grid layout and associated functionality.
+     * @param context The execution context that contains game-related resources and logic.
+     * @param position The optional initial grid position where the shape will be placed.
+     *                 If null, a default position may be used by the factory function.
+     * @return A newly created Shape instance initialized with the provided parameters.
+     */
+    fun create(gridTable: KTableWidget, context: Context, position: GridPosition? = null): Shape =
+        factory(gridTable, context, position)
 }

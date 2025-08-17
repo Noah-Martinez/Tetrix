@@ -3,6 +3,13 @@ package ch.tetrix.game
 import ch.tetrix.shared.models.PlayerConfig
 import com.badlogic.gdx.InputAdapter
 
+/**
+ * Controller that handles player input and maps key presses to specific game actions.
+ *
+ * @constructor Creates a new instance of GameInputController.
+ * @param config the configuration of player controls specifying the mappings for the tetromino and rotor actions.
+ * @param onAction a callback that is invoked with an appropriate [Action] whenever a corresponding key input is detected.
+ */
 class GameInputController(
     private val config: PlayerConfig,
     private val onAction: (Action) -> Unit

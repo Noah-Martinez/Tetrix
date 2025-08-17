@@ -11,6 +11,13 @@ object ConfigManager {
     private const val PREF_NAME = "tetrix_player_config"
     private val prefs: Preferences = Gdx.app.getPreferences(PREF_NAME)
 
+    /**
+     * Holds and manages the current configuration for the player, encompassing controls for tetromino movement,
+     * rotor operations, and audio settings. This variable is mutable only within the class, ensuring controlled
+     * updates and consistency in player configuration throughout the application.
+     *
+     * Modifications to this variable typically occur when saving a new configuration or updating specific control bindings.
+     */
     var playerConfig: PlayerConfig
         private set
 
@@ -64,6 +71,12 @@ object ConfigManager {
         return config
     }
 
+    /**
+     * Saves the provided player configuration to the preference storage.
+     * This includes storing integer and float preferences and updating the internal configuration state.
+     *
+     * @param config The PlayerConfig object containing the player's settings to be saved.
+     */
     fun saveConfig(config: PlayerConfig) {
         prefs.run {
             intPrefs.forEach { p -> putInteger(p.key, p.get(config)) }
@@ -73,6 +86,15 @@ object ConfigManager {
         playerConfig = config
     }
 
+    /**
+     * Updates the key binding for a specific preference key to the provided value.
+     * Ensures that no other key binding conflicts with the specified value.
+     * If a conflict is detected, a `DuplicatedKeyBindingException` is thrown.
+     *
+     * @param preferencesKey The key of the preference to be updated.
+     * @param value The new integer value to bind to the specified preference key.
+     * @throws DuplicatedKeyBindingException if the specified value is already bound to another key.
+     */
     fun keyBindingChanged(preferencesKey: String, value: Int) {
         intPrefs.forEach { p ->
             if (p.key != preferencesKey && p.get(playerConfig) == value) {
@@ -86,6 +108,13 @@ object ConfigManager {
         saveConfig(playerConfig)
     }
 
+    /**
+     * Updates the audio-related preference value bounded between 0 and 1, applies the change
+     * to the current player configuration, and saves the updated configuration.
+     *
+     * @param preferencesKey The key representing the audio preference to be changed.
+     * @param value The new float value for the audio preference, clamped to a range between 0 and 1.
+     */
     fun audioChanged(preferencesKey: String, value: Float) {
         val clamped = value.coerceIn(0f, 1f)
         floatPrefs.forEach { p ->
@@ -94,6 +123,14 @@ object ConfigManager {
         saveConfig(playerConfig)
     }
 
+    /**
+     * Resets the player's configuration to the default settings.
+     *
+     * This method initializes a new `PlayerConfig` object with
+     * default controls and audio settings and saves it using `saveConfig`.
+     * It is typically used to revert the player's personalized settings
+     * to the original default state.
+     */
     fun resetConfig() {
         saveConfig(PlayerConfig())
     }

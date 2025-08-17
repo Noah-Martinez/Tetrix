@@ -34,12 +34,14 @@ class Game : KtxGame<TxScreen>() {
         private val log = logger<Game>()
     }
 
+    init {
+        assets.registerFreeTypeFontLoaders(replaceDefaultBitmapFontLoader = true)
+    }
+
     override fun create() {
         super.create()
+        log.info { "Initializing Game: TETRIX" }
         KtxAsync.initiate()
-
-        // register FreeTypeFont loader:
-        assets.registerFreeTypeFontLoaders(replaceDefaultBitmapFontLoader = true)
 
         contextRegister()
 
@@ -80,10 +82,13 @@ class Game : KtxGame<TxScreen>() {
         return screen
     }
 
+
     /**
-     * This will add a screen if it doesn't already exist.
+     * Sets the current screen for the game if it exists. If the specified screen does not exist,
+     * it creates an instance of the screen, adds it to the game, and sets it as the current screen.
      *
-     * **The screen must have only context as constructor parameters.**
+     * @param type The class type of the screen to be set. The screen should extend the [TxScreen] class.
+     * The type parameter ensures only valid screens are processed.
      */
     override fun <Type : TxScreen> setScreen(type: Class<Type>) {
         if (containsScreen(type)) {
@@ -100,7 +105,6 @@ class Game : KtxGame<TxScreen>() {
 
     override fun dispose() {
         super.dispose()
-        context.remove<Game>() // prevent self call
-        context.dispose()
+        context.clear()
     }
 }

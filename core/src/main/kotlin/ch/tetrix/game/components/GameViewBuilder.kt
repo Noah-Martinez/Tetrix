@@ -1,10 +1,10 @@
 package ch.tetrix.game.components
 
-import ch.tetrix.game.screens.ComponentBackground
-import ch.tetrix.game.screens.ValueBackground
 import ch.tetrix.game.services.GameService
 import ch.tetrix.game.stages.GameStage
 import ch.tetrix.shared.BehaviorSignal
+import ch.tetrix.shared.ComponentBackground
+import ch.tetrix.shared.ValueBackground
 import com.badlogic.gdx.scenes.scene2d.ui.Label
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import com.badlogic.gdx.utils.Align

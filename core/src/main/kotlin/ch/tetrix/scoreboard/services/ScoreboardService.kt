@@ -2,14 +2,17 @@ package ch.tetrix.scoreboard.services
 
 import ch.tetrix.scoreboard.repositories.ScoreboardRepository
 
-/**
- * Factory for creating Scoreboard instances.
- * This factory allows the application to use different Scoreboard implementations
- * without being tightly coupled to a specific implementation.
- */
+
 object ScoreboardService {
+
     /**
-     * The type of storage to use for the scoreboard.
+     * Represents the supported storage types for persisting data.
+     *
+     * This enum is used to specify the type of storage mechanism employed for handling data.
+     * It defines the following storage options:
+     *
+     * - **CSV**: Indicates that data will be stored in a CSV file. Commonly used for simple and portable data storage.
+     * - **DATABASE**: Indicates that data will be stored in a database, suitable for scalable, structured, and transactional data management.
      */
     enum class StorageType {
         CSV,
@@ -19,28 +22,27 @@ object ScoreboardService {
     // Map to store scoreboard instances by type
     private val scoreboardRepositoryInstances = mutableMapOf<StorageType, ScoreboardRepository>()
 
+
     /**
-     * Gets a Scoreboard instance of the specified type.
-     * If a Scoreboard of the specified type has already been created, returns that instance.
+     * Retrieves a `ScoreboardRepository` instance based on the specified storage type.
+     * If an instance for the given type already exists, it will be returned. Otherwise,
+     * a new instance will be created, initialized, and cached for future use.
      *
-     * @param type The type of storage to use for the scoreboard.
-     * @param location Optional location for the scoreboard storage.
-     * @return A Scoreboard instance of the specified type.
+     * @param type The type of storage to use for the scoreboard. This can be either `StorageType.CSV` or `StorageType.DATABASE`.
+     * @param location An optional parameter specifying the file path or connection details for the storage.
+     * If not provided, a default location will be used.
+     * @return The `ScoreboardRepository` instance corresponding to the specified storage type.
      */
     fun getScoreboard(type: StorageType, location: String = ""): ScoreboardRepository {
-        // If we already have a scoreboard instance of this type, return it
         scoreboardRepositoryInstances[type]?.let { return it }
 
-        // Otherwise, create a new instance based on the specified type
         val scoreboard = when (type) {
             StorageType.CSV -> ScoreboardCsvService
             StorageType.DATABASE -> ScoreboardDatabaseService
         }
 
-        // Initialize the scoreboard
         scoreboard.init(location)
 
-        // Store the instance for future use
         scoreboardRepositoryInstances[type] = scoreboard
 
         return scoreboard
