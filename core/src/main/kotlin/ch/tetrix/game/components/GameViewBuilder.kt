@@ -10,6 +10,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import com.badlogic.gdx.utils.Align
 import ktx.inject.Context
 import ktx.scene2d.KTableWidget
+import ktx.scene2d.container
 import ktx.scene2d.label
 import ktx.scene2d.table
 
@@ -97,17 +98,20 @@ object GameViewBuilder {
     }
 
     fun nextShapeContainer(context: Context): KTableWidget {
-        val tableBackground = context.inject<ComponentBackground>().drawable
         val skin = context.inject<Skin>()
+        val bg = context.inject<ComponentBackground>().drawable
+        val next = nextShapeTable(context)
 
         return KTableWidget(skin).apply {
-            setBackground(tableBackground)
+            setBackground(bg)
             pad(16f)
 
-            defaults().expand()
+            row().expandX()
             label("NEXT")
-            row().padTop(8f).fill()
-            add(nextShapeTable(context)).row()
+            row().padTop(8f)
+            container(next).cell(fill = true, width = 120f)
+
+            center()
         }
     }
 
@@ -116,12 +120,10 @@ object GameViewBuilder {
         val valueBackground = context.inject<ValueBackground>().drawable
 
         return KTableWidget(skin).apply {
+            setFillParent(true)
             name = "nextShapeTable"
             setBackground(valueBackground)
-            top()
-            left()
             defaults().uniform()
-
             repeat(4) {
                 repeat(5) { add() }
                 row()

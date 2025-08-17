@@ -25,16 +25,14 @@ fun KTableWidget.resizeToUniformCells(): Float {
 }
 
 fun KTableWidget.computeUniformCellSize(): Float {
-    val columns = this.columns
-    val rows = this.rows
     require(columns > 0 && rows > 0) { "Table must have positive rows and columns" }
 
     val bg = this.background
     val bgMinW = bg?.minWidth ?: 0f
     val bgMinH = bg?.minHeight ?: 0f
 
-    val innerW = this.width - this.padX - bgMinW
-    val innerH = this.height - this.padY - bgMinH
+    val innerW = this.width - bgMinW
+    val innerH = this.height - bgMinH
 
     val cellW = innerW / columns
     val cellH = innerH / rows
