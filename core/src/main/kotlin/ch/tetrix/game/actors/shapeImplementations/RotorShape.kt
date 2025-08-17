@@ -18,6 +18,7 @@ import ktx.async.KtxAsync
 import ktx.inject.Context
 import kotlin.math.abs
 
+// TODO: extrude main rotor cube to make it stand out more
 class RotorShape(
     context: Context,
     val squareClearSound: Sound,

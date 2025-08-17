@@ -4,6 +4,7 @@ import ch.tetrix.game.actions.GameOverAction
 import ch.tetrix.scoreboard.models.ScoreDto
 import com.badlogic.gdx.scenes.scene2d.Stage
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
+import com.badlogic.gdx.scenes.scene2d.ui.TextField
 import com.badlogic.gdx.utils.Align
 import ktx.actors.onClick
 import ktx.scene2d.*
@@ -11,6 +12,7 @@ import ktx.scene2d.*
 object GameOverViewBuilder {
     fun layout(
         skin: Skin,
+        userScore: Int,
         scores: List<ScoreDto>,
         stage: Stage,
         onGameOverAction: (GameOverAction) -> Unit
@@ -37,22 +39,26 @@ object GameOverViewBuilder {
                 label("SCORE")
                 row()
 
-                createScoreRows(scores, stage, onGameOverAction)
+                createScoreRows(skin, scores, stage, onGameOverAction)
 
             }.cell(padBottom = 40f)
             row()
 
             // "MAIN MENU" Button
             textButton("MAIN MENU") {
+                name = "game-over-main-menu-btn"
                 pad(8f)
                 onClick {
-                    onGameOverAction(GameOverAction.MainMenu)
+                    val username = stage.root.findActor<TextField>("score-input").text
+                    val score = ScoreDto(username = username, score = userScore)
+                    onGameOverAction(GameOverAction.UsernameConfirmation(score))
                 }
             }
         }
     }
 
     private fun KTableWidget.createScoreRows(
+        skin: Skin,
         scores: List<ScoreDto>,
         stage: Stage,
         onGameOverAction: (GameOverAction) -> Unit
@@ -60,15 +66,19 @@ object GameOverViewBuilder {
         scores.forEach { score ->
             label(score.rank.toString())
             if (score.id == null) {
-                val userInput = textField("", "nobg") {
-                    messageText = score.username
-                    setTextFieldListener { textField, c ->
-                        if (c == '\r' || c == '\n') {
-                            onGameOverAction(GameOverAction.UsernameConfirmation(score.copy(username = textField.text)))
+                container {
+                    background = skin.getDrawable("game-value-bg")
+                    val userInput = textField("", "nobg") {
+                        name = "score-input"
+                        messageText = score.username
+                        setTextFieldListener { textField, c ->
+                            if (c == '\r' || c == '\n') {
+                                onGameOverAction(GameOverAction.UsernameConfirmation(score.copy(username = textField.text)))
+                            }
                         }
                     }
+                    stage.keyboardFocus = userInput
                 }
-                stage.keyboardFocus = userInput
             } else {
                 label(score.username)
             }

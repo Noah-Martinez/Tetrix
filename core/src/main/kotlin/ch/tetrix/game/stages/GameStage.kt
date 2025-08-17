@@ -96,6 +96,7 @@ class GameStage(
     var tableSizeSet = false
     val table = KTableWidget(skin).apply {
 
+        // TODO: add helper lines to visualize radius/squares
         val background = skin.getDrawable("game-background")
         setBackground(background)
         top()
