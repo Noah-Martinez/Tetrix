@@ -181,7 +181,7 @@ class GameService(private val context: Context) {
     }
 
     fun isOutOfBounds(pos: GridPosition): Boolean {
-        return pos.x !in 0..NUM_COLS || pos.y !in 0..NUM_ROWS
+        return pos.x !in 0 until NUM_COLS || pos.y !in 0 until NUM_ROWS
     }
 
     fun moveActiveShape(direction: Directions): MoveResult {

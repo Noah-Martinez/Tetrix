@@ -41,6 +41,10 @@ fun KTableWidget.computeUniformCellSize(): Float {
 }
 
 fun KTableWidget.gridToWorldPos(pos: GridPosition): Vector2 {
+    if (pos.x !in 0..columns || pos.y !in 0..rows) {
+        error("Position $pos not in grid")
+    }
+
     val cell = this.cells[(pos.y * this.columns) + pos.x]
 
     // Convert the cell's local (table) coordinates into stage coordinates.
@@ -50,6 +54,10 @@ fun KTableWidget.gridToWorldPos(pos: GridPosition): Vector2 {
 }
 
 fun KTableWidget.gridToWorldScale(pos: GridPosition): Vector2 {
+    if (pos.x !in 0..columns || pos.y !in 0..rows) {
+        error("Position $pos not in grid")
+    }
+
     val cell = this.cells[(pos.y * this.columns) + pos.x]
     return vec2(cell.actorWidth, cell.actorHeight)
 }
